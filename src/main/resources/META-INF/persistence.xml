@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="2.1">
+    <persistence-unit name="flatsPU" transaction-type="JTA">
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+        <jta-data-source>java:jboss/datasources/PostgreSQLDS</jta-data-source>
+        
+        <!-- Явно указываем классы сущностей -->
+        <class>com.arekalov.islab1.entity.Flat</class>
+        <class>com.arekalov.islab1.entity.Coordinates</class>
+        <class>com.arekalov.islab1.entity.House</class>
+        
+        <properties>
+            <!-- EclipseLink настройки -->
+            <property name="eclipselink.ddl-generation" value="create-or-extend-tables"/>
+            <property name="eclipselink.logging.level" value="INFO"/>
+            <property name="eclipselink.target-database" value="PostgreSQL"/>
+            <property name="eclipselink.logging.parameters" value="true"/>
+            
+            <!-- Настройки для работы с Kotlin -->
+            <property name="eclipselink.jpa.uppercase-column-names" value="false"/>
+        </properties>
+    </persistence-unit>
+</persistence>
