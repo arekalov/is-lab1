@@ -15,15 +15,16 @@ import jakarta.ws.rs.core.Response
 @Path("/houses")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-class HouseController @Inject constructor(
-    private val houseService: HouseService
-) {
+open class HouseController {
+    
+    @Inject
+    private lateinit var houseService: HouseService
     
     /**
      * Получить список всех домов
      */
     @GET
-    fun getAllHouses(): Response {
+    open fun getAllHouses(): Response {
         return try {
             val houses = houseService.getAllHouses()
             Response.ok(houses).build()
@@ -39,7 +40,7 @@ class HouseController @Inject constructor(
      */
     @GET
     @Path("/{id}")
-    fun getHouseById(@PathParam("id") id: Long): Response {
+    open fun getHouseById(@PathParam("id") id: Long): Response {
         return try {
             val house = houseService.getHouseById(id)
             if (house != null) {
@@ -60,7 +61,7 @@ class HouseController @Inject constructor(
      * Создать новый дом
      */
     @POST
-    fun createHouse(@Valid request: CreateHouseRequest): Response {
+    open fun createHouse(@Valid request: CreateHouseRequest): Response {
         return try {
             val createdHouse = houseService.createHouse(request)
             Response.status(Response.Status.CREATED)
@@ -78,7 +79,7 @@ class HouseController @Inject constructor(
      */
     @PUT
     @Path("/{id}")
-    fun updateHouse(@PathParam("id") id: Long, @Valid request: CreateHouseRequest): Response {
+    open fun updateHouse(@PathParam("id") id: Long, @Valid request: CreateHouseRequest): Response {
         return try {
             val updatedHouse = houseService.updateHouse(id, request)
             if (updatedHouse != null) {
@@ -100,7 +101,7 @@ class HouseController @Inject constructor(
      */
     @DELETE
     @Path("/{id}")
-    fun deleteHouse(@PathParam("id") id: Long): Response {
+    open fun deleteHouse(@PathParam("id") id: Long): Response {
         return try {
             val deleted = houseService.deleteHouse(id)
             if (deleted) {
@@ -122,7 +123,7 @@ class HouseController @Inject constructor(
      */
     @GET
     @Path("/search")
-    fun findByNameContaining(@QueryParam("name") substring: String): Response {
+    open fun findByNameContaining(@QueryParam("name") substring: String): Response {
         return try {
             val houses = houseService.findByNameContaining(substring)
             Response.ok(houses).build()

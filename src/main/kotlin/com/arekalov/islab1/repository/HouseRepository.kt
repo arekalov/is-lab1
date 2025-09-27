@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
  * Репозиторий для работы с домами
  */
 @ApplicationScoped
-class HouseRepository {
+open class HouseRepository {
     
     @PersistenceContext(unitName = "flatsPU")
     private lateinit var entityManager: EntityManager

@@ -14,15 +14,18 @@ import kotlinx.coroutines.runBlocking
  */
 @Stateless
 @Transactional
-open class FlatService @Inject constructor(
-    private val flatRepository: FlatRepository,
-    private val houseRepository: HouseRepository,
-) {
+open class FlatService {
+    
+    @Inject
+    private lateinit var flatRepository: FlatRepository
+    
+    @Inject
+    private lateinit var houseRepository: HouseRepository
     
     /**
      * Получить все квартиры с пагинацией
      */
-    fun getAllFlats(
+    open fun getAllFlats(
         page: Int = 0,
         size: Int = 20,
         sortBy: String = "id",
@@ -60,14 +63,14 @@ open class FlatService @Inject constructor(
     /**
      * Получить квартиру по ID
      */
-    fun getFlatById(id: Long): FlatDTO? = runBlocking {
+    open fun getFlatById(id: Long): FlatDTO? = runBlocking {
         flatRepository.findById(id)?.toDTO()
     }
     
     /**
      * Создать новую квартиру
      */
-    fun createFlat(request: CreateFlatRequest): FlatDTO = runBlocking {
+    open fun createFlat(request: CreateFlatRequest): FlatDTO = runBlocking {
         val house = request.houseId?.let { houseRepository.findById(it) }
         
         val coordinates = Coordinates(
@@ -98,7 +101,7 @@ open class FlatService @Inject constructor(
     /**
      * Обновить квартиру
      */
-    fun updateFlat(id: Long, request: CreateFlatRequest): FlatDTO? = runBlocking {
+    open fun updateFlat(id: Long, request: CreateFlatRequest): FlatDTO? = runBlocking {
         val existingFlat = flatRepository.findById(id) ?: return@runBlocking null
         
         val house = request.houseId?.let { houseRepository.findById(it) }
@@ -131,7 +134,7 @@ open class FlatService @Inject constructor(
     /**
      * Удалить квартиру
      */
-    fun deleteFlat(id: Long): Boolean = runBlocking {
+    open fun deleteFlat(id: Long): Boolean = runBlocking {
         val deleted = flatRepository.deleteById(id)
         deleted
     }
@@ -143,35 +146,35 @@ open class FlatService @Inject constructor(
     /**
      * Количество квартир с комнатами больше заданного
      */
-    fun countByRoomsGreaterThan(minRooms: Int): Long = runBlocking {
+    open fun countByRoomsGreaterThan(minRooms: Int): Long = runBlocking {
         flatRepository.countByNumberOfRoomsGreaterThan(minRooms)
     }
     
     /**
      * Квартиры с названием содержащим подстроку
      */
-    fun findByNameContaining(substring: String): List<FlatDTO> = runBlocking {
+    open fun findByNameContaining(substring: String): List<FlatDTO> = runBlocking {
         flatRepository.findByNameContaining(substring).map { it.toDTO() }
     }
     
     /**
      * Квартиры с жилой площадью меньше заданной
      */
-    fun findByLivingSpaceLessThan(maxSpace: Long): List<FlatDTO> = runBlocking {
+    open fun findByLivingSpaceLessThan(maxSpace: Long): List<FlatDTO> = runBlocking {
         flatRepository.findByLivingSpaceLessThan(maxSpace).map { it.toDTO() }
     }
     
     /**
      * Самая дешевая квартира с балконом
      */
-    fun findCheapestWithBalcony(): FlatDTO? = runBlocking {
+    open fun findCheapestWithBalcony(): FlatDTO? = runBlocking {
         flatRepository.findCheapestWithBalcony()?.toDTO()
     }
     
     /**
      * Квартиры отсортированные по времени до метро
      */
-    fun findAllSortedByMetroTime(): List<FlatDTO> = runBlocking {
+    open fun findAllSortedByMetroTime(): List<FlatDTO> = runBlocking {
         flatRepository.findAllSortedByMetroTime().map { it.toDTO() }
     }
 }

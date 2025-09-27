@@ -14,28 +14,29 @@ import kotlinx.coroutines.runBlocking
  */
 @Stateless
 @Transactional
-open class HouseService @Inject constructor(
-    private val houseRepository: HouseRepository
-) {
+open class HouseService {
+    
+    @Inject
+    private lateinit var houseRepository: HouseRepository
     
     /**
      * Получить все дома
      */
-    fun getAllHouses(): List<HouseDTO> = runBlocking {
+    open fun getAllHouses(): List<HouseDTO> = runBlocking {
         houseRepository.findAll().map { it.toDTO() }
     }
     
     /**
      * Получить дом по ID
      */
-    fun getHouseById(id: Long): HouseDTO? = runBlocking {
+    open fun getHouseById(id: Long): HouseDTO? = runBlocking {
         houseRepository.findById(id)?.toDTO()
     }
     
     /**
      * Создать новый дом
      */
-    fun createHouse(request: CreateHouseRequest): HouseDTO = runBlocking {
+    open fun createHouse(request: CreateHouseRequest): HouseDTO = runBlocking {
         val house = House(
             name = request.name,
             year = request.year,
@@ -49,7 +50,7 @@ open class HouseService @Inject constructor(
     /**
      * Обновить дом
      */
-    fun updateHouse(id: Long, request: CreateHouseRequest): HouseDTO? = runBlocking {
+    open fun updateHouse(id: Long, request: CreateHouseRequest): HouseDTO? = runBlocking {
         val existingHouse = houseRepository.findById(id) ?: return@runBlocking null
         
         val updatedHouse = existingHouse.copy(
@@ -65,14 +66,14 @@ open class HouseService @Inject constructor(
     /**
      * Удалить дом
      */
-    fun deleteHouse(id: Long): Boolean = runBlocking {
+    open fun deleteHouse(id: Long): Boolean = runBlocking {
         houseRepository.deleteById(id)
     }
     
     /**
      * Поиск домов по названию
      */
-    fun findByNameContaining(substring: String): List<HouseDTO> = runBlocking {
+    open fun findByNameContaining(substring: String): List<HouseDTO> = runBlocking {
         houseRepository.findByNameContaining(substring).map { it.toDTO() }
     }
 }

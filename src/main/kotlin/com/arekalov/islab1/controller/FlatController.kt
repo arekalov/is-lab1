@@ -14,15 +14,16 @@ import jakarta.ws.rs.core.Response
 @Path("/flats")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-class FlatController @Inject constructor(
-    private val flatService: FlatService
-) {
+open class FlatController {
+    
+    @Inject
+    private lateinit var flatService: FlatService
     
     /**
      * Получить список квартир с пагинацией и фильтрацией
      */
     @GET
-    fun getFlats(
+    open fun getFlats(
         @QueryParam("page") @DefaultValue("0") page: Int,
         @QueryParam("size") @DefaultValue("20") size: Int,
         @QueryParam("sort") @DefaultValue("id") sortBy: String,
@@ -58,7 +59,7 @@ class FlatController @Inject constructor(
      */
     @GET
     @Path("/{id}")
-    fun getFlatById(@PathParam("id") id: Long): Response {
+    open fun getFlatById(@PathParam("id") id: Long): Response {
         return try {
             val flat = flatService.getFlatById(id)
             if (flat != null) {
@@ -79,7 +80,7 @@ class FlatController @Inject constructor(
      * Создать новую квартиру
      */
     @POST
-    fun createFlat(@Valid request: CreateFlatRequest): Response {
+    open fun createFlat(@Valid request: CreateFlatRequest): Response {
         return try {
             val createdFlat = flatService.createFlat(request)
             Response.status(Response.Status.CREATED)
@@ -97,7 +98,7 @@ class FlatController @Inject constructor(
      */
     @PUT
     @Path("/{id}")
-    fun updateFlat(@PathParam("id") id: Long, @Valid request: CreateFlatRequest): Response {
+    open fun updateFlat(@PathParam("id") id: Long, @Valid request: CreateFlatRequest): Response {
         return try {
             val updatedFlat = flatService.updateFlat(id, request)
             if (updatedFlat != null) {
@@ -119,7 +120,7 @@ class FlatController @Inject constructor(
      */
     @DELETE
     @Path("/{id}")
-    fun deleteFlat(@PathParam("id") id: Long): Response {
+    open fun deleteFlat(@PathParam("id") id: Long): Response {
         return try {
             val deleted = flatService.deleteFlat(id)
             if (deleted) {
@@ -145,7 +146,7 @@ class FlatController @Inject constructor(
      */
     @GET
     @Path("/count-by-rooms")
-    fun countByRoomsGreaterThan(@QueryParam("minRooms") minRooms: Int): Response {
+    open fun countByRoomsGreaterThan(@QueryParam("minRooms") minRooms: Int): Response {
         return try {
             val count = flatService.countByRoomsGreaterThan(minRooms)
             Response.ok(mapOf("count" to count)).build()
@@ -161,7 +162,7 @@ class FlatController @Inject constructor(
      */
     @GET
     @Path("/by-name")
-    fun findByNameContaining(@QueryParam("substring") substring: String): Response {
+    open fun findByNameContaining(@QueryParam("substring") substring: String): Response {
         return try {
             val flats = flatService.findByNameContaining(substring)
             Response.ok(flats).build()
@@ -177,7 +178,7 @@ class FlatController @Inject constructor(
      */
     @GET
     @Path("/by-living-space")
-    fun findByLivingSpaceLessThan(@QueryParam("maxSpace") maxSpace: Long): Response {
+    open fun findByLivingSpaceLessThan(@QueryParam("maxSpace") maxSpace: Long): Response {
         return try {
             val flats = flatService.findByLivingSpaceLessThan(maxSpace)
             Response.ok(flats).build()
@@ -193,7 +194,7 @@ class FlatController @Inject constructor(
      */
     @GET
     @Path("/cheapest-with-balcony")
-    fun findCheapestWithBalcony(): Response {
+    open fun findCheapestWithBalcony(): Response {
         return try {
             val flat = flatService.findCheapestWithBalcony()
             if (flat != null) {
@@ -215,7 +216,7 @@ class FlatController @Inject constructor(
      */
     @GET
     @Path("/sorted-by-metro-time")
-    fun findAllSortedByMetroTime(): Response {
+    open fun findAllSortedByMetroTime(): Response {
         return try {
             val flats = flatService.findAllSortedByMetroTime()
             Response.ok(flats).build()
