@@ -14,10 +14,9 @@ import kotlinx.coroutines.runBlocking
  */
 @Stateless
 @Transactional
-class FlatService @Inject constructor(
+open class FlatService @Inject constructor(
     private val flatRepository: FlatRepository,
     private val houseRepository: HouseRepository,
-    private val notificationService: NotificationService
 ) {
     
     /**
@@ -93,9 +92,6 @@ class FlatService @Inject constructor(
         val savedFlat = flatRepository.save(flat)
         val flatDTO = savedFlat.toDTO()
         
-        // Отправляем уведомление о создании
-        notificationService.notifyFlatCreated(flatDTO)
-        
         flatDTO
     }
     
@@ -129,9 +125,6 @@ class FlatService @Inject constructor(
         val savedFlat = flatRepository.save(updatedFlat)
         val flatDTO = savedFlat.toDTO()
         
-        // Отправляем уведомление об обновлении
-        notificationService.notifyFlatUpdated(flatDTO)
-        
         flatDTO
     }
     
@@ -140,10 +133,6 @@ class FlatService @Inject constructor(
      */
     fun deleteFlat(id: Long): Boolean = runBlocking {
         val deleted = flatRepository.deleteById(id)
-        if (deleted) {
-            // Отправляем уведомление об удалении
-            notificationService.notifyFlatDeleted(id)
-        }
         deleted
     }
     

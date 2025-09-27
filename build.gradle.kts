@@ -31,7 +31,7 @@ dependencies {
     implementation("org.eclipse.persistence:eclipselink:3.0.3")
     
     // PostgreSQL driver (provided by WildFly, but needed for compilation)
-    compileOnly("org.postgresql:postgresql:42.5.0")
+    compileOnly("org.postgresql:postgresql:42.7.7")
     
     // JSON processing with Kotlin support
     implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")

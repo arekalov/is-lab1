@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
  */
 @Stateless
 @Transactional
-class HouseService @Inject constructor(
+open class HouseService @Inject constructor(
     private val houseRepository: HouseRepository
 ) {
     
