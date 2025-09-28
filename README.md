@@ -111,3 +111,291 @@ public enum View {
 ## Примечание
 
 Это задание к лабораторной работе, но реализация будет выполнена как сервер без JSP, только REST endpoints, фронтенд будет отдельный на React.
+
+## API Endpoints
+
+### Базовый URL
+```
+http://se.ifmo.ru:28602/is-lab1/api
+```
+
+### Health Check
+
+#### GET /health
+Проверка состояния сервера.
+
+**Ответ:**
+```json
+{
+  "status": "UP",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "application": "Flats Management System",
+  "version": "1.0.0"
+}
+```
+
+### Управление домами (Houses)
+
+#### GET /houses
+Получить список всех домов.
+
+**Ответ:** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "name": "Дом на Невском",
+    "year": 2020,
+    "numberOfFlatsOnFloor": 4
+  }
+]
+```
+
+#### GET /houses/{id}
+Получить дом по ID.
+
+**Параметры:**
+- `id` (path) - ID дома
+
+**Ответы:**
+- `200 OK` - дом найден
+- `404 Not Found` - дом не найден
+
+#### POST /houses
+Создать новый дом.
+
+**Тело запроса:**
+```json
+{
+  "name": "Новый дом",
+  "year": 2023,
+  "numberOfFlatsOnFloor": 6
+}
+```
+
+**Ответы:**
+- `201 Created` - дом создан
+- `400 Bad Request` - некорректные данные
+
+#### PUT /houses/{id}
+Обновить дом.
+
+**Параметры:**
+- `id` (path) - ID дома
+
+**Тело запроса:**
+```json
+{
+  "name": "Обновленное название",
+  "year": 2024,
+  "numberOfFlatsOnFloor": 8
+}
+```
+
+**Ответы:**
+- `200 OK` - дом обновлен
+- `404 Not Found` - дом не найден
+- `400 Bad Request` - некорректные данные
+
+#### DELETE /houses/{id}
+Удалить дом.
+
+**Параметры:**
+- `id` (path) - ID дома
+
+**Ответы:**
+- `204 No Content` - дом удален
+- `404 Not Found` - дом не найден
+
+#### GET /houses/search
+Поиск домов по названию.
+
+**Параметры:**
+- `name` (query) - подстрока для поиска в названии
+
+**Пример:** `/houses/search?name=Невский`
+
+### Управление квартирами (Flats)
+
+#### GET /flats
+Получить список квартир с пагинацией и фильтрацией.
+
+**Параметры запроса:**
+- `page` (query, optional) - номер страницы (по умолчанию: 0)
+- `size` (query, optional) - размер страницы (по умолчанию: 20)
+- `sortBy` (query, optional) - поле для сортировки (по умолчанию: id)
+- `name` (query, optional) - фильтр по названию квартиры
+- `minPrice` (query, optional) - минимальная цена
+- `maxPrice` (query, optional) - максимальная цена
+- `hasBalcony` (query, optional) - наличие балкона (true/false)
+- `minRooms` (query, optional) - минимальное количество комнат
+- `maxRooms` (query, optional) - максимальное количество комнат
+
+**Пример:** `/flats?page=0&size=10&minPrice=1000000&hasBalcony=true`
+
+**Ответ:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "name": "Уютная квартира",
+      "coordinates": {
+        "x": 100,
+        "y": 200
+      },
+      "creationDate": "2024-01-01T12:00:00Z",
+      "area": 50,
+      "price": 5000000,
+      "balcony": true,
+      "timeToMetroOnFoot": 10,
+      "numberOfRooms": 2,
+      "livingSpace": 35,
+      "furnish": "FINE",
+      "view": "STREET",
+      "house": {
+        "id": 1,
+        "name": "Дом на Невском",
+        "year": 2020,
+        "numberOfFlatsOnFloor": 4
+      }
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1,
+  "currentPage": 0,
+  "pageSize": 20
+}
+```
+
+#### GET /flats/{id}
+Получить квартиру по ID.
+
+**Параметры:**
+- `id` (path) - ID квартиры
+
+**Ответы:**
+- `200 OK` - квартира найдена
+- `404 Not Found` - квартира не найдена
+
+#### POST /flats
+Создать новую квартиру.
+
+**Тело запроса:**
+```json
+{
+  "name": "Новая квартира",
+  "coordinates": {
+    "x": 150,
+    "y": 250
+  },
+  "area": 60,
+  "price": 6000000,
+  "balcony": true,
+  "timeToMetroOnFoot": 15,
+  "numberOfRooms": 3,
+  "livingSpace": 40,
+  "furnish": "DESIGNER",
+  "view": "GOOD",
+  "houseId": 1
+}
+```
+
+**Ответы:**
+- `201 Created` - квартира создана
+- `400 Bad Request` - некорректные данные
+
+#### PUT /flats/{id}
+Обновить квартиру.
+
+**Параметры:**
+- `id` (path) - ID квартиры
+
+**Тело запроса:** аналогично POST /flats
+
+**Ответы:**
+- `200 OK` - квартира обновлена
+- `404 Not Found` - квартира не найдена
+- `400 Bad Request` - некорректные данные
+
+#### DELETE /flats/{id}
+Удалить квартиру.
+
+**Параметры:**
+- `id` (path) - ID квартиры
+
+**Ответы:**
+- `204 No Content` - квартира удалена
+- `404 Not Found` - квартира не найдена
+
+### Специальные операции с квартирами
+
+#### GET /flats/count-by-rooms
+Подсчитать квартиры с количеством комнат больше заданного.
+
+**Параметры:**
+- `minRooms` (query, required) - минимальное количество комнат
+
+**Пример:** `/flats/count-by-rooms?minRooms=2`
+
+**Ответ:** `200 OK`
+```json
+5
+```
+
+#### GET /flats/search-by-name
+Найти квартиры по названию (содержит подстроку).
+
+**Параметры:**
+- `name` (query, required) - подстрока для поиска
+
+**Пример:** `/flats/search-by-name?name=уютная`
+
+**Ответ:** `200 OK` - массив объектов FlatDTO
+
+#### GET /flats/by-living-space
+Найти квартиры с жилой площадью меньше заданной.
+
+**Параметры:**
+- `maxSpace` (query, required) - максимальная жилая площадь
+
+**Пример:** `/flats/by-living-space?maxSpace=40`
+
+**Ответ:** `200 OK` - массив объектов FlatDTO
+
+#### GET /flats/cheapest-with-balcony
+Найти самую дешевую квартиру с балконом.
+
+**Ответы:**
+- `200 OK` - объект FlatDTO
+- `404 Not Found` - квартиры с балконом не найдены
+
+#### GET /flats/sorted-by-metro-time
+Получить все квартиры, отсортированные по времени до метро.
+
+**Ответ:** `200 OK` - массив объектов FlatDTO, отсортированный по возрастанию времени до метро
+
+### Модели данных
+
+#### Enum Furnish
+```
+DESIGNER, NONE, FINE, BAD, LITTLE
+```
+
+#### Enum View
+```
+STREET, YARD, GOOD
+```
+
+### Коды ошибок
+
+Все ошибки возвращаются в формате:
+```json
+{
+  "message": "Описание ошибки"
+}
+```
+
+- `400 Bad Request` - некорректные данные запроса
+- `404 Not Found` - ресурс не найден
+- `500 Internal Server Error` - внутренняя ошибка сервера
