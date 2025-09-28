@@ -22,11 +22,11 @@ public class FlatRepository {
      * Найти все квартиры с пагинацией
      */
     public List<Flat> findAll(int page, int size, String sortBy) {
-        TypedQuery<Flat> query = entityManager.createQuery(
-            "SELECT f FROM Flat f ORDER BY f." + sortBy, Flat.class);
-        query.setFirstResult(page * size);
-        query.setMaxResults(size);
-        return query.getResultList();
+        return entityManager.createNativeQuery(
+            "SELECT * FROM flats ORDER BY " + sortBy + " LIMIT ? OFFSET ?", Flat.class)
+            .setParameter(1, size)
+            .setParameter(2, page * size)
+            .getResultList();
     }
     
     public List<Flat> findAll() {

@@ -19,9 +19,10 @@ dependencies {
     // Jakarta EE API (provided by WildFly, but needed for compilation)
     compileOnly("jakarta.platform:jakarta.jakartaee-api:9.1.0")
     
-    // EclipseLink JPA (стабильная версия для Java 17)
-    implementation("org.eclipse.persistence:eclipselink:2.7.12")
-    
+    // EclipseLink JPA (версия для Jakarta EE 9+) - только JPA, без JAX-RS
+    implementation("org.eclipse.persistence:org.eclipse.persistence.jpa:4.0.2")
+    implementation("org.eclipse.persistence:org.eclipse.persistence.core:4.0.2")
+    implementation("org.eclipse.persistence:org.eclipse.persistence.asm:9.4.0")
     // PostgreSQL driver (provided by WildFly, but needed for compilation)
     compileOnly("org.postgresql:postgresql:42.7.7")
     
