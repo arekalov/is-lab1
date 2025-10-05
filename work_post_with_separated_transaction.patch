@@ -1,0 +1,217 @@
+Subject: [PATCH] work post with separated transaction
+---
+Index: src/main/resources/META-INF/beans.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/META-INF/beans.xml b/src/main/resources/META-INF/beans.xml
+--- a/src/main/resources/META-INF/beans.xml	(revision 7a887eb6a0acff1b8f54646d6acb82902dc5ca40)
++++ b/src/main/resources/META-INF/beans.xml	(date 1759672254825)
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+-<beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"
++<beans xmlns="https://jakarta.ee/xml/ns/jakartaee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+-       xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+-                           http://xmlns.jcp.org/xml/ns/javaee/beans_2_0.xsd"
+-       version="2.0" bean-discovery-mode="all">
++       xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
++                           https://jakarta.ee/xml/ns/jakartaee/beans_4_0.xsd"
++       version="4.0" bean-discovery-mode="all">
+ </beans>
+Index: src/main/java/com/arekalov/islab1/service/HouseService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/com/arekalov/islab1/service/HouseService.java b/src/main/java/com/arekalov/islab1/service/HouseService.java
+--- a/src/main/java/com/arekalov/islab1/service/HouseService.java	(revision 7a887eb6a0acff1b8f54646d6acb82902dc5ca40)
++++ b/src/main/java/com/arekalov/islab1/service/HouseService.java	(date 1759676785902)
+@@ -4,19 +4,30 @@
+ import com.arekalov.islab1.dto.HouseDTO;
+ import com.arekalov.islab1.entity.House;
+ import com.arekalov.islab1.repository.HouseRepository;
+-import jakarta.enterprise.context.ApplicationScoped;
+-import jakarta.inject.Inject;
+-import jakarta.transaction.Transactional;
++import jakarta.ejb.Stateless;
++import jakarta.ejb.TransactionManagement;
++import jakarta.ejb.TransactionManagementType;
++import jakarta.ejb.EJB;
++import jakarta.persistence.EntityManager;
++import jakarta.persistence.EntityManagerFactory;
++import jakarta.persistence.PersistenceUnit;
+ import java.util.List;
+ import java.util.stream.Collectors;
++import java.util.logging.Logger;
+ 
+ /**
+  * Сервис для работы с домами
+  */
+-@ApplicationScoped
++@Stateless
++@TransactionManagement(TransactionManagementType.BEAN)
+ public class HouseService {
+     
+-    @Inject
++    private static final Logger logger = Logger.getLogger(HouseService.class.getName());
++    
++    @PersistenceUnit(unitName = "flatsPU")
++    private EntityManagerFactory entityManagerFactory;
++    
++    @EJB
+     private HouseRepository houseRepository;
+     
+     /**
+@@ -39,17 +50,59 @@
+     /**
+      * Создать новый дом
+      */
+-    @Transactional
+     public HouseDTO createHouse(CreateHouseRequest request) {
+-        House house = new House(request.getName(), request.getYear(), request.getNumberOfFlatsOnFloor());
+-        House savedHouse = houseRepository.save(house);
+-        return toDTO(savedHouse);
++        logger.info("HouseService.createHouse() - начало, выполняем прямой SQL INSERT");
++        
++        EntityManager entityManager = null;
++        try {
++            // Создаем EntityManager из EntityManagerFactory
++            logger.info("HouseService.createHouse() - создаем EntityManager");
++            entityManager = entityManagerFactory.createEntityManager();
++            
++            // Начинаем транзакцию вручную через EntityManager
++            logger.info("HouseService.createHouse() - начинаем транзакцию");
++            entityManager.getTransaction().begin();
++            
++            // Прямой SQL INSERT с захардкоженными значениями
++            String sql = "INSERT INTO houses (name, year, number_of_flats_on_floor) VALUES ('Тестовый дом', 2023, 10)";
++            
++            logger.info("HouseService.createHouse() - выполняем SQL: " + sql);
++            int result = entityManager.createNativeQuery(sql).executeUpdate();
++            logger.info("HouseService.createHouse() - SQL выполнен, затронуто строк: " + result);
++            
++            // Коммитим транзакцию
++            logger.info("HouseService.createHouse() - коммитим транзакцию");
++            entityManager.getTransaction().commit();
++            
++            // Возвращаем захардкоженный DTO
++            HouseDTO responseDTO = new HouseDTO(null, "Тестовый дом", 2023, 10);
++            logger.info("HouseService.createHouse() - возвращаем захардкоженный DTO");
++            
++            return responseDTO;
++            
++        } catch (Exception e) {
++            logger.severe("HouseService.createHouse() - ошибка: " + e.getMessage());
++            try {
++                if (entityManager != null && entityManager.getTransaction().isActive()) {
++                    logger.info("HouseService.createHouse() - откатываем транзакцию");
++                    entityManager.getTransaction().rollback();
++                }
++            } catch (Exception rollbackEx) {
++                logger.severe("HouseService.createHouse() - ошибка отката: " + rollbackEx.getMessage());
++            }
++            throw new RuntimeException("Ошибка создания дома: " + e.getMessage(), e);
++        } finally {
++            // Закрываем EntityManager
++            if (entityManager != null) {
++                logger.info("HouseService.createHouse() - закрываем EntityManager");
++                entityManager.close();
++            }
++        }
+     }
+     
+     /**
+      * Обновить дом
+      */
+-    @Transactional
+     public HouseDTO updateHouse(Long id, CreateHouseRequest request) {
+         House existingHouse = houseRepository.findById(id);
+         if (existingHouse == null) {
+@@ -67,7 +120,6 @@
+     /**
+      * Удалить дом
+      */
+-    @Transactional
+     public boolean deleteHouse(Long id) {
+         return houseRepository.deleteById(id);
+     }
+Index: src/main/java/com/arekalov/islab1/repository/HouseRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/com/arekalov/islab1/repository/HouseRepository.java b/src/main/java/com/arekalov/islab1/repository/HouseRepository.java
+--- a/src/main/java/com/arekalov/islab1/repository/HouseRepository.java	(revision 7a887eb6a0acff1b8f54646d6acb82902dc5ca40)
++++ b/src/main/java/com/arekalov/islab1/repository/HouseRepository.java	(date 1759676197691)
+@@ -1,18 +1,21 @@
+ package com.arekalov.islab1.repository;
+ 
+ import com.arekalov.islab1.entity.House;
+-import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.ejb.Stateless;
+ import jakarta.persistence.EntityManager;
+ import jakarta.persistence.PersistenceContext;
+ import jakarta.persistence.TypedQuery;
+ import java.util.List;
++import java.util.logging.Logger;
+ 
+ /**
+  * Репозиторий для работы с домами
+  */
+-@ApplicationScoped
++@Stateless
+ public class HouseRepository {
+     
++    private static final Logger logger = Logger.getLogger(HouseRepository.class.getName());
++    
+     @PersistenceContext(unitName = "flatsPU")
+     private EntityManager entityManager;
+     
+@@ -36,11 +39,18 @@
+      * Сохранить дом
+      */
+     public House save(House house) {
++        logger.info("HouseRepository.save() - начало, house.name=" + house.getName());
++        
+         if (house.getId() == null) {
++            logger.info("HouseRepository.save() - новый объект, вызываем persist()");
+             entityManager.persist(house);
++            logger.info("HouseRepository.save() - после persist(), id=" + house.getId());
+             return house;
+         } else {
+-            return entityManager.merge(house);
++            logger.info("HouseRepository.save() - существующий объект, вызываем merge()");
++            House merged = entityManager.merge(house);
++            logger.info("HouseRepository.save() - после merge(), id=" + merged.getId());
++            return merged;
+         }
+     }
+     
+Index: src/main/java/com/arekalov/islab1/controller/HouseController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/com/arekalov/islab1/controller/HouseController.java b/src/main/java/com/arekalov/islab1/controller/HouseController.java
+--- a/src/main/java/com/arekalov/islab1/controller/HouseController.java	(revision 7a887eb6a0acff1b8f54646d6acb82902dc5ca40)
++++ b/src/main/java/com/arekalov/islab1/controller/HouseController.java	(date 1759673381737)
+@@ -4,7 +4,7 @@
+ import com.arekalov.islab1.dto.ErrorResponse;
+ import com.arekalov.islab1.dto.HouseDTO;
+ import com.arekalov.islab1.service.HouseService;
+-import jakarta.inject.Inject;
++import jakarta.ejb.EJB;
+ import jakarta.validation.Valid;
+ import jakarta.ws.rs.*;
+ import jakarta.ws.rs.core.MediaType;
+@@ -19,7 +19,7 @@
+ @Consumes(MediaType.APPLICATION_JSON)
+ public class HouseController {
+     
+-    @Inject
++    @EJB
+     private HouseService houseService;
+     
+     /**
