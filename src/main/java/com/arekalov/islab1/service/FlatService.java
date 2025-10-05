@@ -4,7 +4,7 @@ import com.arekalov.islab1.dto.*;
 import com.arekalov.islab1.entity.*;
 import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
-import jakarta.ejb.Stateless;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Сервис для работы с квартирами
  */
-@Stateless
+@ApplicationScoped
 @Transactional
 public class FlatService {
     

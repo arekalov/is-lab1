@@ -16,6 +16,9 @@ repositories {
 }
 
 dependencies {
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+
     // Jakarta EE API (provided by WildFly, but needed for compilation)
     compileOnly("jakarta.platform:jakarta.jakartaee-api:9.1.0")
     

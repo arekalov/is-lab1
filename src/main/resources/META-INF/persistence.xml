@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="2.1">
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="2.0">
     <persistence-unit name="flatsPU" transaction-type="JTA">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-        <jta-data-source>java:jboss/datasources/ExampleDS</jta-data-source>
+        <jta-data-source>java:jboss/datasources/flatsPu</jta-data-source>
         
         <!-- Также явно указываем классы для надежности -->
         <class>com.arekalov.islab1.entity.Flat</class>

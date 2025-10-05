@@ -4,7 +4,7 @@ import com.arekalov.islab1.dto.CreateHouseRequest;
 import com.arekalov.islab1.dto.HouseDTO;
 import com.arekalov.islab1.entity.House;
 import com.arekalov.islab1.repository.HouseRepository;
-import jakarta.ejb.Stateless;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -13,8 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Сервис для работы с домами
  */
-@Stateless
-@Transactional
+@ApplicationScoped
 public class HouseService {
     
     @Inject
@@ -40,6 +39,7 @@ public class HouseService {
     /**
      * Создать новый дом
      */
+    @Transactional
     public HouseDTO createHouse(CreateHouseRequest request) {
         House house = new House(request.getName(), request.getYear(), request.getNumberOfFlatsOnFloor());
         House savedHouse = houseRepository.save(house);
@@ -49,6 +49,7 @@ public class HouseService {
     /**
      * Обновить дом
      */
+    @Transactional
     public HouseDTO updateHouse(Long id, CreateHouseRequest request) {
         House existingHouse = houseRepository.findById(id);
         if (existingHouse == null) {
@@ -66,6 +67,7 @@ public class HouseService {
     /**
      * Удалить дом
      */
+    @Transactional
     public boolean deleteHouse(Long id) {
         return houseRepository.deleteById(id);
     }
