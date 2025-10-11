@@ -15,7 +15,7 @@ import java.util.Map;
 @ApplicationScoped
 public class FlatRepository {
     
-    @PersistenceContext(unitName = "flatsPU")
+    // @PersistenceContext(unitName = "flatsPU") // Временно отключено для нативного EclipseLink
     private EntityManager entityManager;
     
     /**

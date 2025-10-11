@@ -21,7 +21,7 @@ public class HouseService {
     
     private static final Logger logger = Logger.getLogger(HouseService.class.getName());
     
-    @PersistenceUnit(unitName = "flatsPU")
+    // @PersistenceUnit(unitName = "flatsPU") // Временно отключено для нативного EclipseLink
     private EntityManagerFactory entityManagerFactory;
     
     @Inject

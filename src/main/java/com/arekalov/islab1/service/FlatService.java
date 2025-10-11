@@ -6,7 +6,7 @@ import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
+// import jakarta.transaction.Transactional; // Временно отключено для нативного EclipseLink
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * Сервис для работы с квартирами
  */
 @ApplicationScoped
-@Transactional
+// @Transactional // Временно отключено для нативного EclipseLink
 public class FlatService {
     
     @Inject
