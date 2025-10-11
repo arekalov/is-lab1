@@ -3,7 +3,7 @@ package com.arekalov.islab1.controller;
 import com.arekalov.islab1.dto.CreateHouseRequest;
 import com.arekalov.islab1.dto.ErrorResponse;
 import com.arekalov.islab1.dto.HouseDTO;
-import com.arekalov.islab1.service.HouseNativeService;
+import com.arekalov.islab1.service.HouseService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -20,7 +20,7 @@ import java.util.List;
 public class HouseController {
     
     @Inject
-    private HouseNativeService houseService;
+    private HouseService houseService;
     
     /**
      * Получить список всех домов
