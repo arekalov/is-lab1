@@ -1,7 +1,7 @@
 package com.arekalov.islab1.controller;
 
-import com.arekalov.islab1.dto.CreateHouseRequest;
-import com.arekalov.islab1.dto.ErrorResponse;
+import com.arekalov.islab1.dto.request.CreateHouseRequest;
+import com.arekalov.islab1.dto.response.ErrorResponse;
 import com.arekalov.islab1.dto.HouseDTO;
 import com.arekalov.islab1.service.HouseService;
 import jakarta.inject.Inject;

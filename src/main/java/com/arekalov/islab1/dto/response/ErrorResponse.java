@@ -1,4 +1,4 @@
-package com.arekalov.islab1.dto;
+package com.arekalov.islab1.dto.response;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

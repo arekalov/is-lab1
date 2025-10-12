@@ -1,11 +1,11 @@
-package com.arekalov.islab1.entity;
+package com.arekalov.islab1.pojo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 
 /**
- * Основная сущность квартиры (POJO для нативного EclipseLink)
+ * Квартира
  */
 @Data
 @NoArgsConstructor

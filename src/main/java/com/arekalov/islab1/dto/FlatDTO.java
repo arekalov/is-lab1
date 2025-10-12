@@ -1,7 +1,7 @@
 package com.arekalov.islab1.dto;
 
-import com.arekalov.islab1.entity.Furnish;
-import com.arekalov.islab1.entity.View;
+import com.arekalov.islab1.pojo.Furnish;
+import com.arekalov.islab1.pojo.View;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;

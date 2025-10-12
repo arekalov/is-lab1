@@ -1,7 +1,7 @@
-package com.arekalov.islab1.dto;
+package com.arekalov.islab1.dto.request;
 
-import com.arekalov.islab1.entity.Furnish;
-import com.arekalov.islab1.entity.View;
+import com.arekalov.islab1.pojo.Furnish;
+import com.arekalov.islab1.pojo.View;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;

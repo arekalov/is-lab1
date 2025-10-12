@@ -12,9 +12,9 @@ import org.eclipse.persistence.mappings.DirectToFieldMapping;
 import org.eclipse.persistence.sequencing.NativeSequence;
 import org.eclipse.persistence.logging.SessionLog;
 
-import com.arekalov.islab1.entity.House;
-import com.arekalov.islab1.entity.Flat;
-import com.arekalov.islab1.entity.Coordinates;
+import com.arekalov.islab1.pojo.House;
+import com.arekalov.islab1.pojo.Flat;
+import com.arekalov.islab1.pojo.Coordinates;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -242,15 +242,15 @@ public class HouseRepository {
         DirectToFieldMapping furnishMapping = new DirectToFieldMapping();
         furnishMapping.setAttributeName("furnish");
         furnishMapping.setFieldName("flats.furnish");
-        furnishMapping.setAttributeClassification(com.arekalov.islab1.entity.Furnish.class);
+        furnishMapping.setAttributeClassification(com.arekalov.islab1.pojo.Furnish.class);
         
         // Добавляем конвертер для enum
         furnishMapping.setConverter(new org.eclipse.persistence.mappings.converters.Converter() {
             @Override
             public Object convertObjectValueToDataValue(Object objectValue, org.eclipse.persistence.sessions.Session session) {
                 if (objectValue == null) return null;
-                if (objectValue instanceof com.arekalov.islab1.entity.Furnish) {
-                    return ((com.arekalov.islab1.entity.Furnish) objectValue).name();
+                if (objectValue instanceof com.arekalov.islab1.pojo.Furnish) {
+                    return ((com.arekalov.islab1.pojo.Furnish) objectValue).name();
                 }
                 return objectValue;
             }
@@ -259,7 +259,7 @@ public class HouseRepository {
             public Object convertDataValueToObjectValue(Object dataValue, org.eclipse.persistence.sessions.Session session) {
                 if (dataValue == null) return null;
                 if (dataValue instanceof String) {
-                    return com.arekalov.islab1.entity.Furnish.valueOf((String) dataValue);
+                    return com.arekalov.islab1.pojo.Furnish.valueOf((String) dataValue);
                 }
                 return dataValue;
             }
@@ -281,15 +281,15 @@ public class HouseRepository {
         DirectToFieldMapping viewMapping = new DirectToFieldMapping();
         viewMapping.setAttributeName("view");
         viewMapping.setFieldName("flats.view");
-        viewMapping.setAttributeClassification(com.arekalov.islab1.entity.View.class);
+        viewMapping.setAttributeClassification(com.arekalov.islab1.pojo.View.class);
         
         // Добавляем конвертер для enum
         viewMapping.setConverter(new org.eclipse.persistence.mappings.converters.Converter() {
             @Override
             public Object convertObjectValueToDataValue(Object objectValue, org.eclipse.persistence.sessions.Session session) {
                 if (objectValue == null) return null;
-                if (objectValue instanceof com.arekalov.islab1.entity.View) {
-                    return ((com.arekalov.islab1.entity.View) objectValue).name();
+                if (objectValue instanceof com.arekalov.islab1.pojo.View) {
+                    return ((com.arekalov.islab1.pojo.View) objectValue).name();
                 }
                 return objectValue;
             }
@@ -298,7 +298,7 @@ public class HouseRepository {
             public Object convertDataValueToObjectValue(Object dataValue, org.eclipse.persistence.sessions.Session session) {
                 if (dataValue == null) return null;
                 if (dataValue instanceof String) {
-                    return com.arekalov.islab1.entity.View.valueOf((String) dataValue);
+                    return com.arekalov.islab1.pojo.View.valueOf((String) dataValue);
                 }
                 return dataValue;
             }

@@ -1,4 +1,4 @@
-package com.arekalov.islab1.dto;
+package com.arekalov.islab1.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

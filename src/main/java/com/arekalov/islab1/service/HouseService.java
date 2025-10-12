@@ -1,8 +1,8 @@
 package com.arekalov.islab1.service;
 
-import com.arekalov.islab1.dto.CreateHouseRequest;
+import com.arekalov.islab1.dto.request.CreateHouseRequest;
 import com.arekalov.islab1.dto.HouseDTO;
-import com.arekalov.islab1.entity.House;
+import com.arekalov.islab1.pojo.House;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

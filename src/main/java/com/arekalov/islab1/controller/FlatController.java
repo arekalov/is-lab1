@@ -1,6 +1,8 @@
 package com.arekalov.islab1.controller;
 
 import com.arekalov.islab1.dto.*;
+import com.arekalov.islab1.dto.request.CreateFlatRequest;
+import com.arekalov.islab1.dto.response.ErrorResponse;
 import com.arekalov.islab1.service.FlatService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -47,7 +49,7 @@ public class FlatController {
     @Path("/{id}")
     public Response getFlatById(@PathParam("id") Long id) {
         try {
-            com.arekalov.islab1.entity.Flat flat = flatService.getFlatById(id);
+            com.arekalov.islab1.pojo.Flat flat = flatService.getFlatById(id);
             if (flat != null) {
                 FlatDTO flatDTO = convertToDTO(flat);
                 return Response.ok(flatDTO).build();
@@ -69,8 +71,8 @@ public class FlatController {
     @POST
     public Response createFlat(@Valid CreateFlatRequest request) {
         try {
-            com.arekalov.islab1.entity.Flat flat = convertFromRequest(request);
-            com.arekalov.islab1.entity.Flat createdFlat = flatService.createFlat(flat);
+            com.arekalov.islab1.pojo.Flat flat = convertFromRequest(request);
+            com.arekalov.islab1.pojo.Flat createdFlat = flatService.createFlat(flat);
             FlatDTO flatDTO = convertToDTO(createdFlat);
             return Response.status(Response.Status.CREATED).entity(flatDTO).build();
         } catch (Exception e) {
@@ -87,8 +89,8 @@ public class FlatController {
     @Path("/{id}")
     public Response updateFlat(@PathParam("id") Long id, @Valid CreateFlatRequest request) {
         try {
-            com.arekalov.islab1.entity.Flat updatedFlat = convertFromRequest(request);
-            com.arekalov.islab1.entity.Flat result = flatService.updateFlat(id, updatedFlat);
+            com.arekalov.islab1.pojo.Flat updatedFlat = convertFromRequest(request);
+            com.arekalov.islab1.pojo.Flat result = flatService.updateFlat(id, updatedFlat);
             FlatDTO flatDTO = convertToDTO(result);
             return Response.ok(flatDTO).build();
         } catch (RuntimeException e) {
@@ -166,7 +168,7 @@ public class FlatController {
                     .build();
             }
             
-            List<com.arekalov.islab1.entity.Flat> flats = flatService.findByNameContaining(nameSubstring.trim());
+            List<com.arekalov.islab1.pojo.Flat> flats = flatService.findByNameContaining(nameSubstring.trim());
             List<FlatDTO> flatDTOs = flats.stream()
                 .map(this::convertToDTO)
                 .toList();
@@ -193,7 +195,7 @@ public class FlatController {
                     .build();
             }
             
-            List<com.arekalov.islab1.entity.Flat> flats = flatService.findByLivingSpaceLessThan(maxSpace);
+            List<com.arekalov.islab1.pojo.Flat> flats = flatService.findByLivingSpaceLessThan(maxSpace);
             List<FlatDTO> flatDTOs = flats.stream()
                 .map(this::convertToDTO)
                 .toList();
@@ -214,7 +216,7 @@ public class FlatController {
     @Path("/search/cheapest-with-balcony")
     public Response findCheapestWithBalcony() {
         try {
-            com.arekalov.islab1.entity.Flat flat = flatService.findCheapestWithBalcony();
+            com.arekalov.islab1.pojo.Flat flat = flatService.findCheapestWithBalcony();
             
             if (flat != null) {
                 FlatDTO flatDTO = convertToDTO(flat);
@@ -239,7 +241,7 @@ public class FlatController {
     @Path("/sorted-by-metro-time")
     public Response findAllSortedByMetroTime() {
         try {
-            List<com.arekalov.islab1.entity.Flat> flats = flatService.findAllSortedByMetroTime();
+            List<com.arekalov.islab1.pojo.Flat> flats = flatService.findAllSortedByMetroTime();
             List<FlatDTO> flatDTOs = flats.stream()
                 .map(this::convertToDTO)
                 .toList();
@@ -256,7 +258,7 @@ public class FlatController {
     /**
      * Конвертировать Entity в DTO
      */
-    private FlatDTO convertToDTO(com.arekalov.islab1.entity.Flat flat) {
+    private FlatDTO convertToDTO(com.arekalov.islab1.pojo.Flat flat) {
         FlatDTO dto = new FlatDTO();
         dto.setId(flat.getId());
         dto.setName(flat.getName());
@@ -295,8 +297,8 @@ public class FlatController {
     /**
      * Конвертировать Request в Entity
      */
-    private com.arekalov.islab1.entity.Flat convertFromRequest(CreateFlatRequest request) {
-        com.arekalov.islab1.entity.Flat flat = new com.arekalov.islab1.entity.Flat();
+    private com.arekalov.islab1.pojo.Flat convertFromRequest(CreateFlatRequest request) {
+        com.arekalov.islab1.pojo.Flat flat = new com.arekalov.islab1.pojo.Flat();
         flat.setName(request.getName());
         flat.setArea(request.getArea());
         flat.setPrice(request.getPrice());
@@ -309,7 +311,7 @@ public class FlatController {
         
         // Конвертируем координаты
         if (request.getCoordinates() != null) {
-            com.arekalov.islab1.entity.Coordinates coords = new com.arekalov.islab1.entity.Coordinates();
+            com.arekalov.islab1.pojo.Coordinates coords = new com.arekalov.islab1.pojo.Coordinates();
             coords.setX(request.getCoordinates().getX());
             coords.setY(request.getCoordinates().getY());
             flat.setCoordinates(coords);
@@ -317,7 +319,7 @@ public class FlatController {
         
         // Конвертируем дом (если указан ID)
         if (request.getHouseId() != null) {
-            com.arekalov.islab1.entity.House house = new com.arekalov.islab1.entity.House();
+            com.arekalov.islab1.pojo.House house = new com.arekalov.islab1.pojo.House();
             house.setId(request.getHouseId());
             flat.setHouse(house);
         }

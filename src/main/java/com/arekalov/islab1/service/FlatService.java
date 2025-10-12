@@ -1,7 +1,7 @@
 package com.arekalov.islab1.service;
 
-import com.arekalov.islab1.entity.Flat;
-import com.arekalov.islab1.entity.House;
+import com.arekalov.islab1.pojo.Flat;
+import com.arekalov.islab1.pojo.House;
 import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;

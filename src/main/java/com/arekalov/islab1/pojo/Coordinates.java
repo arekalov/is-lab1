@@ -1,11 +1,11 @@
-package com.arekalov.islab1.entity;
+package com.arekalov.islab1.pojo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Сущность координат (POJO для нативного EclipseLink)
+ * Координаты
  */
 @Data
 @NoArgsConstructor

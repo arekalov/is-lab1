@@ -1,7 +1,6 @@
 package com.arekalov.islab1.repository;
 
-import com.arekalov.islab1.entity.Flat;
-import com.arekalov.islab1.entity.Coordinates;
+import com.arekalov.islab1.pojo.Flat;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.persistence.sessions.DatabaseSession;
