@@ -89,9 +89,9 @@ public class FlatRepository {
             DataReadQuery dataQuery = new DataReadQuery();
             dataQuery.setSQLString(sql);
             
-            // Выполняем запрос и получаем результат
+            // Выполняем запрос и получаем результат через безопасный метод
             @SuppressWarnings("unchecked")
-            List<DatabaseRecord> records = (List<DatabaseRecord>) session.executeQuery(dataQuery);
+            List<DatabaseRecord> records = (List<DatabaseRecord>) sessionService.executeQuery(dataQuery);
             
             // Конвертируем DatabaseRecord в объекты Flat
             List<Flat> flats = new ArrayList<>();
@@ -407,13 +407,37 @@ public class FlatRepository {
             Flat flat = new Flat();
             
             // Основные поля
-            flat.setId(((Number) record.get("id")).longValue());
+            Object idObj = record.get("id");
+            if (idObj != null) {
+                flat.setId(((Number) idObj).longValue());
+            }
+
             flat.setName((String) record.get("name"));
-            flat.setArea(((Number) record.get("area")).longValue());
-            flat.setPrice(((Number) record.get("price")).longValue());
-            flat.setLivingSpace(((Number) record.get("living_space")).longValue());
-            flat.setNumberOfRooms(((Number) record.get("number_of_rooms")).intValue());
-            flat.setTimeToMetroOnFoot(((Number) record.get("time_to_metro_on_foot")).longValue());
+
+            Object areaObj = record.get("area");
+            if (areaObj != null) {
+                flat.setArea(((Number) areaObj).longValue());
+            }
+
+            Object priceObj = record.get("price");
+            if (priceObj != null) {
+                flat.setPrice(((Number) priceObj).longValue());
+            }
+
+            Object livingSpaceObj = record.get("living_space");
+            if (livingSpaceObj != null) {
+                flat.setLivingSpace(((Number) livingSpaceObj).longValue());
+            }
+
+            Object roomsObj = record.get("number_of_rooms");
+            if (roomsObj != null) {
+                flat.setNumberOfRooms(((Number) roomsObj).intValue());
+            }
+
+            Object metroTimeObj = record.get("time_to_metro_on_foot");
+            if (metroTimeObj != null) {
+                flat.setTimeToMetroOnFoot(((Number) metroTimeObj).longValue());
+            }
             
             // Булевое поле
             Object balconyValue = record.get("balcony");
@@ -444,16 +468,22 @@ public class FlatRepository {
             }
             
             // Связанные объекты - загружаем отдельно
-            Long coordinatesId = ((Number) record.get("coordinates_id")).longValue();
-            if (coordinatesId != null) {
+            Object coordinatesIdObj = record.get("coordinates_id");
+            if (coordinatesIdObj != null) {
+                Long coordinatesId = ((Number) coordinatesIdObj).longValue();
                 Coordinates coordinates = findCoordinatesById(coordinatesId, session);
-                flat.setCoordinates(coordinates);
+                if (coordinates != null) {
+                    flat.setCoordinates(coordinates);
+                }
             }
             
-            Long houseId = ((Number) record.get("house_id")).longValue();
-            if (houseId != null) {
+            Object houseIdObj = record.get("house_id");
+            if (houseIdObj != null) {
+                Long houseId = ((Number) houseIdObj).longValue();
                 House house = findHouseById(houseId, session);
-                flat.setHouse(house);
+                if (house != null) {
+                    flat.setHouse(house);
+                }
             }
             
             return flat;
