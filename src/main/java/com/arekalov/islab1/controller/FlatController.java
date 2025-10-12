@@ -131,6 +131,129 @@ public class FlatController {
     }
     
     /**
+     * Подсчитать количество квартир с количеством комнат больше заданного
+     */
+    @GET
+    @Path("/count/rooms-greater-than/{minRooms}")
+    public Response countByRoomsGreaterThan(@PathParam("minRooms") Integer minRooms) {
+        try {
+            if (minRooms == null || minRooms < 0) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Количество комнат должно быть неотрицательным числом"))
+                    .build();
+            }
+            
+            Long count = flatService.countByRoomsGreaterThan(minRooms);
+            return Response.ok(count).build();
+            
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Ошибка подсчета квартир: " + e.getMessage()))
+                .build();
+        }
+    }
+    
+    /**
+     * Найти квартиры, содержащие подстроку в названии
+     */
+    @GET
+    @Path("/search/by-name")
+    public Response findByNameContaining(@QueryParam("substring") String nameSubstring) {
+        try {
+            if (nameSubstring == null || nameSubstring.trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Подстрока для поиска не может быть пустой"))
+                    .build();
+            }
+            
+            List<com.arekalov.islab1.entity.Flat> flats = flatService.findByNameContaining(nameSubstring.trim());
+            List<FlatDTO> flatDTOs = flats.stream()
+                .map(this::convertToDTO)
+                .toList();
+            
+            return Response.ok(flatDTOs).build();
+            
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Ошибка поиска квартир по названию: " + e.getMessage()))
+                .build();
+        }
+    }
+    
+    /**
+     * Найти квартиры с жилой площадью меньше заданной
+     */
+    @GET
+    @Path("/search/by-living-space-less-than/{maxSpace}")
+    public Response findByLivingSpaceLessThan(@PathParam("maxSpace") Long maxSpace) {
+        try {
+            if (maxSpace == null || maxSpace <= 0) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Максимальная жилая площадь должна быть больше 0"))
+                    .build();
+            }
+            
+            List<com.arekalov.islab1.entity.Flat> flats = flatService.findByLivingSpaceLessThan(maxSpace);
+            List<FlatDTO> flatDTOs = flats.stream()
+                .map(this::convertToDTO)
+                .toList();
+            
+            return Response.ok(flatDTOs).build();
+            
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Ошибка поиска квартир по жилой площади: " + e.getMessage()))
+                .build();
+        }
+    }
+    
+    /**
+     * Найти самую дешевую квартиру с балконом
+     */
+    @GET
+    @Path("/search/cheapest-with-balcony")
+    public Response findCheapestWithBalcony() {
+        try {
+            com.arekalov.islab1.entity.Flat flat = flatService.findCheapestWithBalcony();
+            
+            if (flat != null) {
+                FlatDTO flatDTO = convertToDTO(flat);
+                return Response.ok(flatDTO).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Квартиры с балконом не найдены"))
+                    .build();
+            }
+            
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Ошибка поиска самой дешевой квартиры с балконом: " + e.getMessage()))
+                .build();
+        }
+    }
+    
+    /**
+     * Получить все квартиры, отсортированные по времени до метро пешком
+     */
+    @GET
+    @Path("/sorted-by-metro-time")
+    public Response findAllSortedByMetroTime() {
+        try {
+            List<com.arekalov.islab1.entity.Flat> flats = flatService.findAllSortedByMetroTime();
+            List<FlatDTO> flatDTOs = flats.stream()
+                .map(this::convertToDTO)
+                .toList();
+            
+            return Response.ok(flatDTOs).build();
+            
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Ошибка получения квартир, отсортированных по времени до метро: " + e.getMessage()))
+                .build();
+        }
+    }
+    
+    /**
      * Конвертировать Entity в DTO
      */
     private FlatDTO convertToDTO(com.arekalov.islab1.entity.Flat flat) {

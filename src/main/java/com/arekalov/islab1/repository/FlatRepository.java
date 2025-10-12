@@ -10,8 +10,6 @@ import org.eclipse.persistence.queries.ReadObjectQuery;
 import org.eclipse.persistence.expressions.ExpressionBuilder;
 import org.eclipse.persistence.expressions.Expression;
 
-import javax.naming.InitialContext;
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -73,27 +71,19 @@ public class FlatRepository {
      * Подсчитать общее количество квартир
      */
     public Long count() {
-        logger.info("FlatNativeRepository.count() - подсчет общего количества квартир");
+        logger.info("FlatRepository.count() - подсчет общего количества квартир");
         
         try {
-            InitialContext ctx = new InitialContext();
-            DataSource dataSource = (DataSource) ctx.lookup("java:jboss/datasources/flatsPu");
+            DatabaseSession session = houseRepository.getDatabaseSession();
             
-            String sql = "SELECT COUNT(*) FROM flats";
+            ReadAllQuery query = new ReadAllQuery(Flat.class);
             
-            try (java.sql.Connection connection = dataSource.getConnection();
-                 java.sql.PreparedStatement stmt = connection.prepareStatement(sql)) {
-                
-                try (java.sql.ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        long count = rs.getLong(1);
-                        logger.info("FlatNativeRepository.count() - общее количество квартир: " + count);
-                        return count;
-                    }
-                }
-            }
+            @SuppressWarnings("unchecked")
+            List<Flat> flats = (List<Flat>) session.executeQuery(query);
             
-            return 0L;
+            long count = flats.size();
+            logger.info("FlatRepository.count() - общее количество квартир: " + count);
+            return count;
             
         } catch (Exception e) {
             logger.severe("Ошибка подсчета квартир: " + e.getMessage());
@@ -200,52 +190,163 @@ public class FlatRepository {
     }
     
     /**
-     * Найти координаты по ID
-     */
-    private Coordinates findCoordinatesById(Long id) {
-        try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
-            
-            ReadObjectQuery query = new ReadObjectQuery(Coordinates.class);
-            ExpressionBuilder builder = query.getExpressionBuilder();
-            Expression criteria = builder.get("id").equal(id);
-            query.setSelectionCriteria(criteria);
-            
-            return (Coordinates) session.executeQuery(query);
-            
-        } catch (Exception e) {
-            logger.severe("Ошибка поиска координат по ID: " + e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
      * Проверить, используются ли координаты другими квартирами
      */
     private boolean isCoordinatesUsedByOtherFlats(Long coordinatesId) {
         try {
-            InitialContext ctx = new InitialContext();
-            DataSource dataSource = (DataSource) ctx.lookup("java:jboss/datasources/flatsPu");
+            DatabaseSession session = houseRepository.getDatabaseSession();
             
-            String sql = "SELECT COUNT(*) FROM flats WHERE coordinates_id = ?";
+            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            ExpressionBuilder builder = query.getExpressionBuilder();
+            Expression criteria = builder.get("coordinates").get("id").equal(coordinatesId);
+            query.setSelectionCriteria(criteria);
             
-            try (java.sql.Connection connection = dataSource.getConnection();
-                 java.sql.PreparedStatement stmt = connection.prepareStatement(sql)) {
-                
-                stmt.setLong(1, coordinatesId);
-                
-                try (java.sql.ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getLong(1) > 1; // Больше 1 означает, что есть другие квартиры
-                    }
-                }
-            }
+            @SuppressWarnings("unchecked")
+            List<Flat> flats = (List<Flat>) session.executeQuery(query);
             
-            return false;
+            return flats.size() > 1; // Больше 1 означает, что есть другие квартиры
             
         } catch (Exception e) {
             logger.severe("Ошибка проверки использования координат: " + e.getMessage());
             return true; // В случае ошибки лучше не удалять координаты
+        }
+    }
+    
+    /**
+     * Подсчитать количество квартир с количеством комнат больше заданного
+     */
+    public Long countByRoomsGreaterThan(Integer minRooms) {
+        logger.info("FlatRepository.countByRoomsGreaterThan() - подсчет квартир с комнатами > " + minRooms);
+        
+        try {
+            DatabaseSession session = houseRepository.getDatabaseSession();
+            
+            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            ExpressionBuilder builder = query.getExpressionBuilder();
+            Expression criteria = builder.get("numberOfRooms").greaterThan(minRooms);
+            query.setSelectionCriteria(criteria);
+            
+            @SuppressWarnings("unchecked")
+            List<Flat> flats = (List<Flat>) session.executeQuery(query);
+            
+            long count = flats.size();
+            logger.info("FlatRepository.countByRoomsGreaterThan() - найдено квартир: " + count);
+            return count;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка подсчета квартир по комнатам: " + e.getMessage());
+            throw new RuntimeException("Error counting flats by rooms: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти квартиры, содержащие подстроку в названии
+     */
+    public List<Flat> findByNameContaining(String nameSubstring) {
+        logger.info("FlatRepository.findByNameContaining() - поиск квартир с названием содержащим: " + nameSubstring);
+        
+        try {
+            DatabaseSession session = houseRepository.getDatabaseSession();
+            
+            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            ExpressionBuilder builder = query.getExpressionBuilder();
+            Expression criteria = builder.get("name").like("%" + nameSubstring + "%");
+            query.setSelectionCriteria(criteria);
+            
+            @SuppressWarnings("unchecked")
+            List<Flat> flats = (List<Flat>) session.executeQuery(query);
+            
+            logger.info("FlatRepository.findByNameContaining() - найдено квартир: " + flats.size());
+            return flats;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка поиска квартир по названию: " + e.getMessage());
+            throw new RuntimeException("Error finding flats by name: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти квартиры с жилой площадью меньше заданной
+     */
+    public List<Flat> findByLivingSpaceLessThan(Long maxSpace) {
+        logger.info("FlatRepository.findByLivingSpaceLessThan() - поиск квартир с площадью < " + maxSpace);
+        
+        try {
+            DatabaseSession session = houseRepository.getDatabaseSession();
+            
+            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            ExpressionBuilder builder = query.getExpressionBuilder();
+            Expression criteria = builder.get("livingSpace").lessThan(maxSpace);
+            query.setSelectionCriteria(criteria);
+            
+            @SuppressWarnings("unchecked")
+            List<Flat> flats = (List<Flat>) session.executeQuery(query);
+            
+            logger.info("FlatRepository.findByLivingSpaceLessThan() - найдено квартир: " + flats.size());
+            return flats;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка поиска квартир по жилой площади: " + e.getMessage());
+            throw new RuntimeException("Error finding flats by living space: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти самую дешевую квартиру с балконом
+     */
+    public Flat findCheapestWithBalcony() {
+        logger.info("FlatRepository.findCheapestWithBalcony() - поиск самой дешевой квартиры с балконом");
+        
+        try {
+            DatabaseSession session = houseRepository.getDatabaseSession();
+            
+            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            ExpressionBuilder builder = query.getExpressionBuilder();
+            Expression criteria = builder.get("balcony").equal(true);
+            query.setSelectionCriteria(criteria);
+            query.addOrdering(builder.get("price").ascending());
+            query.setMaxRows(1);
+            
+            @SuppressWarnings("unchecked")
+            List<Flat> flats = (List<Flat>) session.executeQuery(query);
+            
+            if (!flats.isEmpty()) {
+                Flat cheapest = flats.get(0);
+                logger.info("FlatRepository.findCheapestWithBalcony() - найдена квартира: " + cheapest.getName() + ", цена: " + cheapest.getPrice());
+                return cheapest;
+            } else {
+                logger.info("FlatRepository.findCheapestWithBalcony() - квартиры с балконом не найдены");
+                return null;
+            }
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка поиска самой дешевой квартиры с балконом: " + e.getMessage());
+            throw new RuntimeException("Error finding cheapest flat with balcony: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти все квартиры, отсортированные по времени до метро
+     */
+    public List<Flat> findAllSortedByMetroTime() {
+        logger.info("FlatRepository.findAllSortedByMetroTime() - поиск всех квартир, отсортированных по времени до метро");
+        
+        try {
+            DatabaseSession session = houseRepository.getDatabaseSession();
+            
+            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            ExpressionBuilder builder = query.getExpressionBuilder();
+            query.addOrdering(builder.get("timeToMetroOnFoot").ascending());
+            
+            @SuppressWarnings("unchecked")
+            List<Flat> flats = (List<Flat>) session.executeQuery(query);
+            
+            logger.info("FlatRepository.findAllSortedByMetroTime() - найдено квартир: " + flats.size());
+            return flats;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка поиска квартир, отсортированных по времени до метро: " + e.getMessage());
+            throw new RuntimeException("Error finding flats sorted by metro time: " + e.getMessage(), e);
         }
     }
 }

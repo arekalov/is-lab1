@@ -1,7 +1,6 @@
 package com.arekalov.islab1.service;
 
 import com.arekalov.islab1.entity.Flat;
-import com.arekalov.islab1.entity.Coordinates;
 import com.arekalov.islab1.entity.House;
 import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
@@ -256,5 +255,96 @@ public class FlatService {
         }
         
         logger.info("FlatNativeService.validateFlat() - валидация прошла успешно");
+    }
+    
+    /**
+     * Подсчитать количество квартир с количеством комнат больше заданного
+     */
+    public Long countByRoomsGreaterThan(Integer minRooms) {
+        logger.info("FlatService.countByRoomsGreaterThan() - подсчет квартир с комнатами > " + minRooms);
+        
+        try {
+            Long count = flatRepository.countByRoomsGreaterThan(minRooms);
+            logger.info("FlatService.countByRoomsGreaterThan() - найдено квартир: " + count);
+            return count;
+            
+        } catch (Exception e) {
+            logger.severe("FlatService.countByRoomsGreaterThan() - ошибка: " + e.getMessage());
+            throw new RuntimeException("Ошибка подсчета квартир по комнатам: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти квартиры, содержащие подстроку в названии
+     */
+    public List<Flat> findByNameContaining(String nameSubstring) {
+        logger.info("FlatService.findByNameContaining() - поиск квартир с названием содержащим: " + nameSubstring);
+        
+        try {
+            List<Flat> flats = flatRepository.findByNameContaining(nameSubstring);
+            logger.info("FlatService.findByNameContaining() - найдено квартир: " + flats.size());
+            return flats;
+            
+        } catch (Exception e) {
+            logger.severe("FlatService.findByNameContaining() - ошибка: " + e.getMessage());
+            throw new RuntimeException("Ошибка поиска квартир по названию: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти квартиры с жилой площадью меньше заданной
+     */
+    public List<Flat> findByLivingSpaceLessThan(Long maxSpace) {
+        logger.info("FlatService.findByLivingSpaceLessThan() - поиск квартир с площадью < " + maxSpace);
+        
+        try {
+            List<Flat> flats = flatRepository.findByLivingSpaceLessThan(maxSpace);
+            logger.info("FlatService.findByLivingSpaceLessThan() - найдено квартир: " + flats.size());
+            return flats;
+            
+        } catch (Exception e) {
+            logger.severe("FlatService.findByLivingSpaceLessThan() - ошибка: " + e.getMessage());
+            throw new RuntimeException("Ошибка поиска квартир по жилой площади: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти самую дешевую квартиру с балконом
+     */
+    public Flat findCheapestWithBalcony() {
+        logger.info("FlatService.findCheapestWithBalcony() - поиск самой дешевой квартиры с балконом");
+        
+        try {
+            Flat flat = flatRepository.findCheapestWithBalcony();
+            
+            if (flat != null) {
+                logger.info("FlatService.findCheapestWithBalcony() - найдена квартира: " + flat.getName() + ", цена: " + flat.getPrice());
+            } else {
+                logger.info("FlatService.findCheapestWithBalcony() - квартиры с балконом не найдены");
+            }
+            
+            return flat;
+            
+        } catch (Exception e) {
+            logger.severe("FlatService.findCheapestWithBalcony() - ошибка: " + e.getMessage());
+            throw new RuntimeException("Ошибка поиска самой дешевой квартиры с балконом: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти все квартиры, отсортированные по времени до метро
+     */
+    public List<Flat> findAllSortedByMetroTime() {
+        logger.info("FlatService.findAllSortedByMetroTime() - поиск всех квартир, отсортированных по времени до метро");
+        
+        try {
+            List<Flat> flats = flatRepository.findAllSortedByMetroTime();
+            logger.info("FlatService.findAllSortedByMetroTime() - найдено квартир: " + flats.size());
+            return flats;
+            
+        } catch (Exception e) {
+            logger.severe("FlatService.findAllSortedByMetroTime() - ошибка: " + e.getMessage());
+            throw new RuntimeException("Ошибка поиска квартир, отсортированных по времени до метро: " + e.getMessage(), e);
+        }
     }
 }
