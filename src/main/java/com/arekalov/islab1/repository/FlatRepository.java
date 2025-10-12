@@ -1,17 +1,26 @@
 package com.arekalov.islab1.repository;
 
 import com.arekalov.islab1.pojo.Flat;
+import com.arekalov.islab1.pojo.Coordinates;
+import com.arekalov.islab1.pojo.House;
+import com.arekalov.islab1.pojo.Furnish;
+import com.arekalov.islab1.pojo.View;
 import com.arekalov.islab1.service.DatabaseSessionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.persistence.sessions.DatabaseSession;
 import org.eclipse.persistence.queries.ReadAllQuery;
 import org.eclipse.persistence.queries.ReadObjectQuery;
+import org.eclipse.persistence.queries.DataReadQuery;
 import org.eclipse.persistence.expressions.ExpressionBuilder;
 import org.eclipse.persistence.expressions.Expression;
+import org.eclipse.persistence.sessions.DatabaseRecord;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Logger;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Репозиторий для работы с квартирами на нативном EclipseLink API
@@ -38,35 +47,67 @@ public class FlatRepository {
     public List<Flat> findAll(int page, int size, String sortBy) {
         logger.info("FlatRepository.findAll() - поиск квартир: page=" + page + ", size=" + size + ", sortBy=" + sortBy);
         
+        // Валидация параметров
+        if (page < 0) {
+            logger.warning("FlatRepository.findAll() - page не может быть отрицательным: " + page);
+            page = 0;
+        }
+        if (size <= 0) {
+            logger.warning("FlatRepository.findAll() - size должен быть положительным: " + size);
+            size = 10; // default size
+        }
+        if (size > 100) {
+            logger.warning("FlatRepository.findAll() - size слишком большой: " + size);
+            size = 100; // max size
+        }
+        
         try {
             DatabaseSession session = getSession();
             
-            // Создаем запрос для получения всех квартир
-            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            // Рассчитываем offset
+            int offset = page * size;
+            logger.info("FlatRepository.findAll() - рассчитанные параметры: offset=" + offset + ", limit=" + size);
             
-            // Добавляем сортировку
-            if ("id".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("id").ascending());
-            } else if ("name".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("name").ascending());
+            // Определяем поле сортировки
+            String orderByField = "id"; // default
+            if ("name".equals(sortBy)) {
+                orderByField = "name";
             } else if ("price".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("price").ascending());
+                orderByField = "price";
             } else if ("area".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("area").ascending());
+                orderByField = "area";
             }
             
-            // Устанавливаем лимит и смещение для пагинации
-            query.setMaxRows(size);
-            query.setFirstResult(page * size);
+            // Создаем прямой SQL запрос с LIMIT и OFFSET
+            String sql = "SELECT id, area, balcony, creation_date, furnish, living_space, name, " +
+                        "number_of_rooms, price, time_to_metro_on_foot, view, coordinates_id, house_id " +
+                        "FROM flats ORDER BY " + orderByField + " ASC LIMIT " + size + " OFFSET " + offset;
             
+            logger.info("FlatRepository.findAll() - выполняем SQL: " + sql);
+            
+            // Создаем DataReadQuery для выполнения прямого SQL
+            DataReadQuery dataQuery = new DataReadQuery();
+            dataQuery.setSQLString(sql);
+            
+            // Выполняем запрос и получаем результат
             @SuppressWarnings("unchecked")
-            List<Flat> flats = (List<Flat>) session.executeQuery(query);
+            List<DatabaseRecord> records = (List<DatabaseRecord>) session.executeQuery(dataQuery);
+            
+            // Конвертируем DatabaseRecord в объекты Flat
+            List<Flat> flats = new ArrayList<>();
+            for (DatabaseRecord record : records) {
+                Flat flat = convertRecordToFlat(record, session);
+                if (flat != null) {
+                    flats.add(flat);
+                }
+            }
             
             logger.info("FlatRepository.findAll() - найдено квартир: " + flats.size());
             return flats;
             
         } catch (Exception e) {
             logger.severe("Ошибка поиска квартир: " + e.getMessage());
+            e.printStackTrace(); // Добавляем stack trace для отладки
             throw new RuntimeException("Error finding flats: " + e.getMessage(), e);
         }
     }
@@ -355,6 +396,102 @@ public class FlatRepository {
         } catch (Exception e) {
             logger.severe("Ошибка поиска квартир, отсортированных по времени до метро: " + e.getMessage());
             throw new RuntimeException("Error finding flats sorted by metro time: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Конвертирует DatabaseRecord из базы данных в объект Flat
+     */
+    private Flat convertRecordToFlat(DatabaseRecord record, DatabaseSession session) {
+        try {
+            Flat flat = new Flat();
+            
+            // Основные поля
+            flat.setId(((Number) record.get("id")).longValue());
+            flat.setName((String) record.get("name"));
+            flat.setArea(((Number) record.get("area")).longValue());
+            flat.setPrice(((Number) record.get("price")).longValue());
+            flat.setLivingSpace(((Number) record.get("living_space")).longValue());
+            flat.setNumberOfRooms(((Number) record.get("number_of_rooms")).intValue());
+            flat.setTimeToMetroOnFoot(((Number) record.get("time_to_metro_on_foot")).longValue());
+            
+            // Булевое поле
+            Object balconyValue = record.get("balcony");
+            if (balconyValue != null) {
+                flat.setBalcony((Boolean) balconyValue);
+            }
+            
+            // Enum поля
+            String furnishStr = (String) record.get("furnish");
+            if (furnishStr != null) {
+                flat.setFurnish(Furnish.valueOf(furnishStr));
+            }
+            
+            String viewStr = (String) record.get("view");
+            if (viewStr != null) {
+                flat.setView(View.valueOf(viewStr));
+            }
+            
+            // ZonedDateTime поле
+            Object creationDateValue = record.get("creation_date");
+            if (creationDateValue != null) {
+                if (creationDateValue instanceof java.sql.Timestamp) {
+                    java.sql.Timestamp timestamp = (java.sql.Timestamp) creationDateValue;
+                    flat.setCreationDate(timestamp.toLocalDateTime().atZone(java.time.ZoneId.systemDefault()));
+                } else if (creationDateValue instanceof String) {
+                    flat.setCreationDate(ZonedDateTime.parse((String) creationDateValue, DateTimeFormatter.ISO_ZONED_DATE_TIME));
+                }
+            }
+            
+            // Связанные объекты - загружаем отдельно
+            Long coordinatesId = ((Number) record.get("coordinates_id")).longValue();
+            if (coordinatesId != null) {
+                Coordinates coordinates = findCoordinatesById(coordinatesId, session);
+                flat.setCoordinates(coordinates);
+            }
+            
+            Long houseId = ((Number) record.get("house_id")).longValue();
+            if (houseId != null) {
+                House house = findHouseById(houseId, session);
+                flat.setHouse(house);
+            }
+            
+            return flat;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка конвертации Record в Flat: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Находит координаты по ID
+     */
+    private Coordinates findCoordinatesById(Long id, DatabaseSession session) {
+        try {
+            ReadObjectQuery query = new ReadObjectQuery(Coordinates.class);
+            Expression expression = query.getExpressionBuilder().get("id").equal(id);
+            query.setSelectionCriteria(expression);
+            return (Coordinates) session.executeQuery(query);
+        } catch (Exception e) {
+            logger.warning("Не удалось загрузить координаты с ID " + id + ": " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Находит дом по ID
+     */
+    private House findHouseById(Long id, DatabaseSession session) {
+        try {
+            ReadObjectQuery query = new ReadObjectQuery(House.class);
+            Expression expression = query.getExpressionBuilder().get("id").equal(id);
+            query.setSelectionCriteria(expression);
+            return (House) session.executeQuery(query);
+        } catch (Exception e) {
+            logger.warning("Не удалось загрузить дом с ID " + id + ": " + e.getMessage());
+            return null;
         }
     }
 }

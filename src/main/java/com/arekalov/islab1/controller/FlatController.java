@@ -3,6 +3,7 @@ package com.arekalov.islab1.controller;
 import com.arekalov.islab1.dto.*;
 import com.arekalov.islab1.dto.request.CreateFlatRequest;
 import com.arekalov.islab1.dto.response.ErrorResponse;
+import com.arekalov.islab1.dto.response.PagedResponse;
 import com.arekalov.islab1.service.FlatService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * REST контроллер для работы с квартирами на нативном EclipseLink
@@ -19,27 +21,80 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class FlatController {
     
+    private static final Logger logger = Logger.getLogger(FlatController.class.getName());
+    
     @Inject
     private FlatService flatService;
     
     /**
-     * Получить список всех квартир
+     * Получить список всех квартир с пагинацией
      */
     @GET
-    public Response getFlats() {
+    public Response getFlats(@QueryParam("page") @DefaultValue("0") int page,
+                            @QueryParam("size") @DefaultValue("10") int size,
+                            @QueryParam("sortBy") @DefaultValue("id") String sortBy) {
         try {
-            // Получаем все квартиры без пагинации
-            List<FlatDTO> flats = flatService.getAllFlats()
-                .stream()
+            // Расширенная валидация параметров пагинации
+            if (page < 0) {
+                logger.warning("FlatController.getFlats() - Некорректный page: " + page);
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Номер страницы не может быть отрицательным"))
+                    .build();
+            }
+            if (size <= 0) {
+                logger.warning("FlatController.getFlats() - Некорректный size: " + size);
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Размер страницы должен быть больше 0"))
+                    .build();
+            }
+            if (size > 100) {
+                logger.warning("FlatController.getFlats() - Слишком большой size: " + size);
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Размер страницы не может быть больше 100"))
+                    .build();
+            }
+            
+            // Валидация параметра сортировки
+            if (!isValidSortBy(sortBy)) {
+                logger.warning("FlatController.getFlats() - Некорректный sortBy: " + sortBy);
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Недопустимое поле для сортировки: " + sortBy + 
+                        ". Доступные поля: id, name, price, area"))
+                    .build();
+            }
+            
+            logger.info("FlatController.getFlats() - Запрос пагинации: page=" + page + ", size=" + size + ", sortBy=" + sortBy);
+            
+            // Получаем данные с пагинацией
+            List<com.arekalov.islab1.pojo.Flat> flats = flatService.getAllFlats(page, size, sortBy);
+            long total = flatService.countFlats();
+            
+            logger.info("FlatController.getFlats() - Получено квартир: " + flats.size() + ", общее количество: " + total);
+            
+            // Конвертируем в DTO
+            List<FlatDTO> flatDTOs = flats.stream()
                 .map(this::convertToDTO)
                 .toList();
             
-            return Response.ok(flats).build();
+            // Создаем пагинированный ответ
+            PagedResponse<FlatDTO> pagedResponse = new PagedResponse<>(flatDTOs, total, page, size);
+            
+            return Response.ok(pagedResponse).build();
         } catch (Exception e) {
+            logger.severe("FlatController.getFlats() - Ошибка: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new ErrorResponse("Ошибка получения списка квартир: " + e.getMessage()))
                 .build();
         }
+    }
+    
+    /**
+     * Проверка валидности поля для сортировки
+     */
+    private boolean isValidSortBy(String sortBy) {
+        return "id".equals(sortBy) || "name".equals(sortBy) || 
+               "price".equals(sortBy) || "area".equals(sortBy);
     }
     
     /**

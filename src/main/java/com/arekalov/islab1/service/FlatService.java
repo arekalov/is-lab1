@@ -43,27 +43,27 @@ public class FlatService {
     }
     
     /**
+     * Получить общее количество квартир
+     */
+    public long countFlats() {
+        logger.info("FlatService.countFlats() - подсчет общего количества квартир");
+        
+        try {
+            Long count = flatRepository.count();
+            logger.info("FlatService.countFlats() - общее количество квартир: " + count);
+            return count;
+            
+        } catch (Exception e) {
+            logger.severe("FlatService.countFlats() - ошибка подсчета квартир: " + e.getMessage());
+            throw new RuntimeException("Ошибка подсчета квартир: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
      * Получить все квартиры без пагинации
      */
     public List<Flat> getAllFlats() {
         return getAllFlats(0, 20, "id");
-    }
-    
-    /**
-     * Подсчитать общее количество квартир
-     */
-    public Long countFlats() {
-        logger.info("FlatNativeService.countFlats() - подсчет общего количества квартир");
-        
-        try {
-            Long count = flatRepository.count();
-            logger.info("FlatNativeService.countFlats() - общее количество: " + count);
-            return count;
-            
-        } catch (Exception e) {
-            logger.severe("FlatNativeService.countFlats() - ошибка подсчета: " + e.getMessage());
-            throw new RuntimeException("Ошибка подсчета квартир: " + e.getMessage(), e);
-        }
     }
     
     /**

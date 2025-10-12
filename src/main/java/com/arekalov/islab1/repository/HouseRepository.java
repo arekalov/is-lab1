@@ -3,7 +3,9 @@ package com.arekalov.islab1.repository;
 import org.eclipse.persistence.sessions.DatabaseSession;
 import org.eclipse.persistence.queries.ReadAllQuery;
 import org.eclipse.persistence.queries.ReadObjectQuery;
+import org.eclipse.persistence.queries.DataReadQuery;
 import org.eclipse.persistence.expressions.ExpressionBuilder;
+import org.eclipse.persistence.sessions.DatabaseRecord;
 
 import com.arekalov.islab1.pojo.House;
 import com.arekalov.islab1.service.DatabaseSessionService;
@@ -12,6 +14,7 @@ import jakarta.inject.Inject;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 /**
@@ -62,7 +65,91 @@ public class HouseRepository {
     }
     
     /**
-     * Найти все дома
+     * Найти все дома с пагинацией
+     */
+    @SuppressWarnings("unchecked")
+    public List<House> findAll(int page, int size) {
+        logger.info("HouseRepository.findAll() - поиск домов с пагинацией: page=" + page + ", size=" + size);
+        
+        // Валидация параметров
+        if (page < 0) {
+            logger.warning("HouseRepository.findAll() - page не может быть отрицательным: " + page);
+            page = 0;
+        }
+        if (size <= 0) {
+            logger.warning("HouseRepository.findAll() - size должен быть положительным: " + size);
+            size = 10; // default size
+        }
+        if (size > 100) {
+            logger.warning("HouseRepository.findAll() - size слишком большой: " + size);
+            size = 100; // max size
+        }
+        
+        try {
+            DatabaseSession session = getSession();
+            
+            // Рассчитываем offset
+            int offset = page * size;
+            logger.info("HouseRepository.findAll() - рассчитанные параметры: offset=" + offset + ", limit=" + size);
+            
+            // Создаем прямой SQL запрос с LIMIT и OFFSET
+            String sql = "SELECT id, name, year, number_of_flats_on_floor " +
+                        "FROM houses ORDER BY id ASC LIMIT " + size + " OFFSET " + offset;
+            
+            logger.info("HouseRepository.findAll() - выполняем SQL: " + sql);
+            
+            // Создаем DataReadQuery для выполнения прямого SQL
+            DataReadQuery dataQuery = new DataReadQuery();
+            dataQuery.setSQLString(sql);
+            
+            // Выполняем запрос и получаем результат
+            @SuppressWarnings("unchecked")
+            List<DatabaseRecord> records = (List<DatabaseRecord>) session.executeQuery(dataQuery);
+            
+            // Конвертируем DatabaseRecord в объекты House
+            List<House> houses = new ArrayList<>();
+            for (DatabaseRecord record : records) {
+                House house = convertRecordToHouse(record);
+                if (house != null) {
+                    houses.add(house);
+                }
+            }
+            
+            logger.info("HouseRepository.findAll() - найдено домов: " + houses.size());
+            return houses;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка поиска домов с пагинацией: " + e.getMessage());
+            e.printStackTrace(); // Добавляем stack trace для отладки
+            throw new RuntimeException("Error finding houses with pagination: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Подсчитать общее количество домов
+     */
+    public long count() {
+        logger.info("HouseRepository.count() - подсчет общего количества домов");
+        
+        try {
+            DatabaseSession session = getSession();
+            
+            ReadAllQuery query = new ReadAllQuery(House.class);
+            @SuppressWarnings("unchecked")
+            List<House> houses = (List<House>) session.executeQuery(query);
+            
+            long count = houses.size();
+            logger.info("HouseRepository.count() - общее количество домов: " + count);
+            return count;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка подсчета домов: " + e.getMessage());
+            throw new RuntimeException("Error counting houses: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Найти все дома (без пагинации) - для обратной совместимости
      */
     @SuppressWarnings("unchecked")
     public List<House> findAll() {
@@ -242,6 +329,28 @@ public class HouseRepository {
         } catch (Exception e) {
             logger.severe("Ошибка поиска домов по названию: " + e.getMessage());
             throw new RuntimeException("Error finding houses by name: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Конвертирует DatabaseRecord из базы данных в объект House
+     */
+    private House convertRecordToHouse(DatabaseRecord record) {
+        try {
+            House house = new House();
+            
+            // Основные поля
+            house.setId(((Number) record.get("id")).longValue());
+            house.setName((String) record.get("name"));
+            house.setYear(((Number) record.get("year")).intValue());
+            house.setNumberOfFlatsOnFloor(((Number) record.get("number_of_flats_on_floor")).intValue());
+            
+            return house;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка конвертации Record в House: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
     }
     

@@ -22,7 +22,23 @@ public class HouseService {
     private HouseRepository houseRepository;
     
     /**
-     * Получить все дома
+     * Получить все дома с пагинацией
+     */
+    public List<HouseDTO> getAllHouses(int page, int size) {
+        return houseRepository.findAll(page, size).stream()
+            .map(this::toDTO)
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Получить общее количество домов
+     */
+    public long countHouses() {
+        return houseRepository.count();
+    }
+    
+    /**
+     * Получить все дома (без пагинации) - для обратной совместимости
      */
     public List<HouseDTO> getAllHouses() {
         return houseRepository.findAll().stream()

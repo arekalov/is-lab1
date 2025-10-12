@@ -2,6 +2,7 @@ package com.arekalov.islab1.controller;
 
 import com.arekalov.islab1.dto.request.CreateHouseRequest;
 import com.arekalov.islab1.dto.response.ErrorResponse;
+import com.arekalov.islab1.dto.response.PagedResponse;
 import com.arekalov.islab1.dto.HouseDTO;
 import com.arekalov.islab1.service.HouseService;
 import jakarta.inject.Inject;
@@ -23,13 +24,32 @@ public class HouseController {
     private HouseService houseService;
     
     /**
-     * Получить список всех домов
+     * Получить список всех домов с пагинацией
      */
     @GET
-    public Response getAllHouses() {
+    public Response getAllHouses(@QueryParam("page") @DefaultValue("0") int page,
+                                @QueryParam("size") @DefaultValue("10") int size) {
         try {
-            List<HouseDTO> houses = houseService.getAllHouses();
-            return Response.ok(houses).build();
+            // Валидация параметров пагинации
+            if (page < 0) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Номер страницы не может быть отрицательным"))
+                    .build();
+            }
+            if (size <= 0 || size > 100) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Размер страницы должен быть от 1 до 100"))
+                    .build();
+            }
+            
+            // Получаем данные с пагинацией
+            List<HouseDTO> houses = houseService.getAllHouses(page, size);
+            long total = houseService.countHouses();
+            
+            // Создаем пагинированный ответ
+            PagedResponse<HouseDTO> pagedResponse = new PagedResponse<>(houses, total, page, size);
+            
+            return Response.ok(pagedResponse).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new ErrorResponse("Ошибка получения списка домов: " + e.getMessage()))
