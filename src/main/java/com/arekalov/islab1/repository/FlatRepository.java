@@ -1,6 +1,7 @@
 package com.arekalov.islab1.repository;
 
 import com.arekalov.islab1.pojo.Flat;
+import com.arekalov.islab1.service.DatabaseSessionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.persistence.sessions.DatabaseSession;
@@ -14,6 +15,7 @@ import java.util.logging.Logger;
 
 /**
  * Репозиторий для работы с квартирами на нативном EclipseLink API
+ * Использует централизованный DatabaseSessionService для управления сессией
  */
 @ApplicationScoped
 public class FlatRepository {
@@ -21,7 +23,14 @@ public class FlatRepository {
     private static final Logger logger = Logger.getLogger(FlatRepository.class.getName());
     
     @Inject
-    private HouseRepository houseRepository; // Используем общую сессию
+    private DatabaseSessionService sessionService;
+    
+    /**
+     * Получить активную DatabaseSession
+     */
+    private DatabaseSession getSession() {
+        return sessionService.getDatabaseSession();
+    }
     
     /**
      * Найти все квартиры с пагинацией через EclipseLink API
@@ -30,7 +39,7 @@ public class FlatRepository {
         logger.info("FlatRepository.findAll() - поиск квартир: page=" + page + ", size=" + size + ", sortBy=" + sortBy);
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             // Создаем запрос для получения всех квартир
             ReadAllQuery query = new ReadAllQuery(Flat.class);
@@ -73,7 +82,7 @@ public class FlatRepository {
         logger.info("FlatRepository.count() - подсчет общего количества квартир");
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             
@@ -97,7 +106,7 @@ public class FlatRepository {
         logger.info("FlatNativeRepository.findById() - поиск квартиры с id=" + id);
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadObjectQuery query = new ReadObjectQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
@@ -127,7 +136,7 @@ public class FlatRepository {
         logger.info("FlatNativeRepository.save() - сохранение квартиры: " + flat.getName());
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             // Сначала сохраняем координаты, если они новые
             if (flat.getCoordinates() != null && flat.getCoordinates().getId() == null) {
@@ -158,7 +167,7 @@ public class FlatRepository {
         logger.info("FlatNativeRepository.deleteById() - удаление квартиры с id=" + id);
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             // Сначала найдем квартиру
             Flat flat = findById(id);
@@ -193,7 +202,7 @@ public class FlatRepository {
      */
     private boolean isCoordinatesUsedByOtherFlats(Long coordinatesId) {
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
@@ -218,7 +227,7 @@ public class FlatRepository {
         logger.info("FlatRepository.countByRoomsGreaterThan() - подсчет квартир с комнатами > " + minRooms);
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
@@ -245,7 +254,7 @@ public class FlatRepository {
         logger.info("FlatRepository.findByNameContaining() - поиск квартир с названием содержащим: " + nameSubstring);
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
@@ -271,7 +280,7 @@ public class FlatRepository {
         logger.info("FlatRepository.findByLivingSpaceLessThan() - поиск квартир с площадью < " + maxSpace);
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
@@ -297,7 +306,7 @@ public class FlatRepository {
         logger.info("FlatRepository.findCheapestWithBalcony() - поиск самой дешевой квартиры с балконом");
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
@@ -331,7 +340,7 @@ public class FlatRepository {
         logger.info("FlatRepository.findAllSortedByMetroTime() - поиск всех квартир, отсортированных по времени до метро");
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            DatabaseSession session = getSession();
             
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
