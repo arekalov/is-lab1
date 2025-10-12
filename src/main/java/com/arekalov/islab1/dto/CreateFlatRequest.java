@@ -3,12 +3,15 @@ package com.arekalov.islab1.dto;
 import com.arekalov.islab1.entity.Furnish;
 import com.arekalov.islab1.entity.View;
 import jakarta.validation.constraints.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * DTO для создания новой квартиры
  */
+@Data
+@NoArgsConstructor
 public class CreateFlatRequest {
-    
     @NotBlank(message = "Название не может быть пустым")
     private String name;
     
@@ -41,41 +44,4 @@ public class CreateFlatRequest {
     private View view;
     
     private Long houseId;
-    
-    // Конструктор без параметров
-    public CreateFlatRequest() {}
-    
-    // Getters and Setters
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    
-    public CreateCoordinatesRequest getCoordinates() { return coordinates; }
-    public void setCoordinates(CreateCoordinatesRequest coordinates) { this.coordinates = coordinates; }
-    
-    public Long getArea() { return area; }
-    public void setArea(Long area) { this.area = area; }
-    
-    public Long getPrice() { return price; }
-    public void setPrice(Long price) { this.price = price; }
-    
-    public Boolean getBalcony() { return balcony; }
-    public void setBalcony(Boolean balcony) { this.balcony = balcony; }
-    
-    public Long getTimeToMetroOnFoot() { return timeToMetroOnFoot; }
-    public void setTimeToMetroOnFoot(Long timeToMetroOnFoot) { this.timeToMetroOnFoot = timeToMetroOnFoot; }
-    
-    public Integer getNumberOfRooms() { return numberOfRooms; }
-    public void setNumberOfRooms(Integer numberOfRooms) { this.numberOfRooms = numberOfRooms; }
-    
-    public Long getLivingSpace() { return livingSpace; }
-    public void setLivingSpace(Long livingSpace) { this.livingSpace = livingSpace; }
-    
-    public Furnish getFurnish() { return furnish; }
-    public void setFurnish(Furnish furnish) { this.furnish = furnish; }
-    
-    public View getView() { return view; }
-    public void setView(View view) { this.view = view; }
-    
-    public Long getHouseId() { return houseId; }
-    public void setHouseId(Long houseId) { this.houseId = houseId; }
 }

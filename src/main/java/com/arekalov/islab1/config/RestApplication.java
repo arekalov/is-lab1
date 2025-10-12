@@ -2,7 +2,6 @@ package com.arekalov.islab1.config;
 
 import com.arekalov.islab1.controller.FlatController;
 import com.arekalov.islab1.controller.HouseController;
-import com.arekalov.islab1.controller.HealthController;
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
 import java.util.Set;
@@ -19,8 +18,6 @@ public class RestApplication extends Application {
             // Контроллеры
             FlatController.class,
             HouseController.class,
-            HealthController.class,
-            // Провайдеры
             JacksonConfig.class
         );
     }
