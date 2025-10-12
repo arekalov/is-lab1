@@ -217,13 +217,29 @@ public class FlatController {
     @Path("/search/by-name")
     public Response findByNameContaining(@QueryParam("substring") String nameSubstring) {
         try {
+            // Проверка входных данных
             if (nameSubstring == null || nameSubstring.trim().isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("Подстрока для поиска не может быть пустой"))
                     .build();
             }
             
-            List<com.arekalov.islab1.pojo.Flat> flats = flatService.findByNameContaining(nameSubstring.trim());
+            // Ограничение длины поискового запроса
+            String trimmedSubstring = nameSubstring.trim();
+            if (trimmedSubstring.length() > 100) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Длина поисковой строки не может превышать 100 символов"))
+                    .build();
+            }
+            
+            // Проверка на специальные символы
+            if (!trimmedSubstring.matches("^[\\p{L}\\p{N}\\s\\-_.,]+$")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Поисковая строка содержит недопустимые символы"))
+                    .build();
+            }
+            
+            List<com.arekalov.islab1.pojo.Flat> flats = flatService.findByNameContaining(trimmedSubstring);
             List<FlatDTO> flatDTOs = flats.stream()
                 .map(this::convertToDTO)
                 .toList();

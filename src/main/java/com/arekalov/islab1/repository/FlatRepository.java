@@ -297,10 +297,18 @@ public class FlatRepository {
         try {
             DatabaseSession session = getSession();
             
+            // Приводим поисковую строку к нижнему регистру и убираем лишние пробелы
+            String searchString = nameSubstring.trim().toLowerCase();
+            
             ReadAllQuery query = new ReadAllQuery(Flat.class);
             ExpressionBuilder builder = query.getExpressionBuilder();
-            Expression criteria = builder.get("name").like("%" + nameSubstring + "%");
+            
+            // Поиск без учета регистра
+            Expression criteria = builder.get("name").toLowerCase().like("%" + searchString + "%");
             query.setSelectionCriteria(criteria);
+            
+            // Сортировка результатов по имени
+            query.addOrdering(builder.get("name").ascending());
             
             @SuppressWarnings("unchecked")
             List<Flat> flats = (List<Flat>) session.executeQuery(query);
