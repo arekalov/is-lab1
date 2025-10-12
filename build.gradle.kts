@@ -25,12 +25,12 @@ dependencies {
     // EclipseLink Core для нативного API (БЕЗ JPA)
     implementation("org.eclipse.persistence:org.eclipse.persistence.core:4.0.2")
     implementation("org.eclipse.persistence:org.eclipse.persistence.asm:9.4.0")
+    
+    // Jackson JSR310 для поддержки Java 8 времени
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
+    
     // PostgreSQL driver (provided by WildFly, but needed for compilation)
     compileOnly("org.postgresql:postgresql:42.7.7")
-    
-    // JSON processing
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2")
     
     // Bean Validation
     compileOnly("org.hibernate.validator:hibernate-validator:6.2.5.Final")

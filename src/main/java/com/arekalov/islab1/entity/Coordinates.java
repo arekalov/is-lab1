@@ -1,27 +1,27 @@
 package com.arekalov.islab1.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+// import jakarta.persistence.*;
+// import jakarta.validation.constraints.NotNull;
 
 /**
- * Сущность координат
+ * Сущность координат (POJO для нативного EclipseLink)
  */
-@Entity
-@Table(name = "coordinates")
+// @Entity
+// @Table(name = "coordinates")
 public class Coordinates {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    // @Id
+    // @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @NotNull(message = "Координата X не может быть null")
-    @Column(name = "x", nullable = false)
+    // @NotNull(message = "Координата X не может быть null")
+    // @Column(name = "x", nullable = false)
     private Integer x;
     
-    @Column(name = "y", nullable = false)
+    // @Column(name = "y", nullable = false)
     private Integer y;
     
-    // Конструктор без параметров для JPA
+    // Конструктор без параметров
     public Coordinates() {}
     
     public Coordinates(Integer x, Integer y) {

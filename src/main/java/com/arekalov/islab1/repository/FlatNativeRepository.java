@@ -19,44 +19,84 @@ import java.util.logging.Logger;
  * Репозиторий для работы с квартирами на нативном EclipseLink API
  */
 @ApplicationScoped
-public class FlatRepository {
+public class FlatNativeRepository {
     
-    private static final Logger logger = Logger.getLogger(FlatRepository.class.getName());
+    private static final Logger logger = Logger.getLogger(FlatNativeRepository.class.getName());
     
     @Inject
     private HouseRepository houseRepository; // Используем общую сессию
     
     /**
-     * Найти все квартиры с пагинацией через EclipseLink API
+     * Найти все квартиры с пагинацией через прямой SQL
      */
     public List<Flat> findAll(int page, int size, String sortBy) {
-        logger.info("FlatRepository.findAll() - поиск квартир: page=" + page + ", size=" + size + ", sortBy=" + sortBy);
+        logger.info("FlatNativeRepository.findAll() - поиск квартир: page=" + page + ", size=" + size + ", sortBy=" + sortBy);
         
         try {
-            DatabaseSession session = houseRepository.getDatabaseSession();
+            // Получаем DataSource напрямую из JNDI для выполнения запроса с пагинацией
+            InitialContext ctx = new InitialContext();
+            DataSource dataSource = (DataSource) ctx.lookup("java:jboss/datasources/flatsPu");
             
-            // Создаем запрос для получения всех квартир
-            ReadAllQuery query = new ReadAllQuery(Flat.class);
+            String sql = "SELECT f.id, f.name, f.area, f.price, f.balcony, f.time_to_metro_on_foot, " +
+                        "f.number_of_rooms, f.living_space, f.furnish, f.view, f.creation_date, " +
+                        "f.coordinates_id, f.house_id " +
+                        "FROM flats f ORDER BY " + sortBy + " LIMIT ? OFFSET ?";
             
-            // Добавляем сортировку
-            if ("id".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("id").ascending());
-            } else if ("name".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("name").ascending());
-            } else if ("price".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("price").ascending());
-            } else if ("area".equals(sortBy)) {
-                query.addOrdering(query.getExpressionBuilder().get("area").ascending());
+            List<Flat> flats = new java.util.ArrayList<>();
+            
+            try (java.sql.Connection connection = dataSource.getConnection();
+                 java.sql.PreparedStatement stmt = connection.prepareStatement(sql)) {
+                
+                stmt.setInt(1, size);
+                stmt.setInt(2, page * size);
+                
+                try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Flat flat = new Flat();
+                        flat.setId(rs.getLong("id"));
+                        flat.setName(rs.getString("name"));
+                        flat.setArea((long) rs.getDouble("area"));
+                        flat.setPrice(rs.getLong("price"));
+                        flat.setBalcony(rs.getBoolean("balcony"));
+                        flat.setTimeToMetroOnFoot((long) rs.getInt("time_to_metro_on_foot"));
+                        flat.setNumberOfRooms(rs.getInt("number_of_rooms"));
+                        flat.setLivingSpace((long) rs.getFloat("living_space"));
+                        
+                        // Enum fields
+                        String furnishStr = rs.getString("furnish");
+                        if (furnishStr != null) {
+                            flat.setFurnish(com.arekalov.islab1.entity.Furnish.valueOf(furnishStr));
+                        }
+                        
+                        String viewStr = rs.getString("view");
+                        if (viewStr != null) {
+                            flat.setView(com.arekalov.islab1.entity.View.valueOf(viewStr));
+                        }
+                        
+                        flat.setCreationDate(rs.getTimestamp("creation_date").toLocalDateTime().atZone(java.time.ZoneId.systemDefault()));
+                        
+                        // Foreign keys - we'll load them separately if needed
+                        Long coordinatesId = rs.getLong("coordinates_id");
+                        if (!rs.wasNull()) {
+                            // Load coordinates separately
+                            Coordinates coordinates = findCoordinatesById(coordinatesId);
+                            flat.setCoordinates(coordinates);
+                        }
+                        
+                        Long houseId = rs.getLong("house_id");
+                        if (!rs.wasNull()) {
+                            // We can set just the ID to avoid circular dependency
+                            com.arekalov.islab1.entity.House house = new com.arekalov.islab1.entity.House();
+                            house.setId(houseId);
+                            flat.setHouse(house);
+                        }
+                        
+                        flats.add(flat);
+                    }
+                }
             }
             
-            // Устанавливаем лимит и смещение для пагинации
-            query.setMaxRows(size);
-            query.setFirstResult(page * size);
-            
-            @SuppressWarnings("unchecked")
-            List<Flat> flats = (List<Flat>) session.executeQuery(query);
-            
-            logger.info("FlatRepository.findAll() - найдено квартир: " + flats.size());
+            logger.info("FlatNativeRepository.findAll() - найдено квартир: " + flats.size());
             return flats;
             
         } catch (Exception e) {
