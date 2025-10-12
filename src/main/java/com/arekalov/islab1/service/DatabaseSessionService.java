@@ -66,6 +66,22 @@ public class DatabaseSessionService {
         login.setShouldBindAllParameters(false);
         login.setUsesJDBCBatchWriting(false);
         
+        // Настройки соединения
+        login.setTransactionIsolation(java.sql.Connection.TRANSACTION_READ_COMMITTED);
+        
+        // Дополнительные настройки через свойства
+        java.util.Properties properties = new java.util.Properties();
+        properties.setProperty("eclipselink.jdbc.connections.initial", "1");
+        properties.setProperty("eclipselink.jdbc.connections.min", "1");
+        properties.setProperty("eclipselink.jdbc.connections.max", "5");
+        properties.setProperty("eclipselink.jdbc.read-connections.min", "1");
+        properties.setProperty("eclipselink.jdbc.write-connections.min", "1");
+        properties.setProperty("eclipselink.jdbc.timeout", "10");
+        properties.setProperty("eclipselink.logging.level", "FINE");
+        properties.setProperty("eclipselink.logging.connection", "true");
+        properties.setProperty("eclipselink.logging.exceptions", "true");
+        login.setProperties(properties);
+        
         // Создаем проект с дескрипторами
         Project project = new Project();
         project.setLogin(login);
@@ -84,58 +100,138 @@ public class DatabaseSessionService {
         
         while (attempts < MAX_RETRY_ATTEMPTS) {
             try {
-                if (databaseSession != null) {
-                    try {
-                        databaseSession.logout();
-                    } catch (Exception e) {
-                        logger.warning("Ошибка при закрытии старой сессии: " + e.getMessage());
-                    }
+                // Clean up old session if exists
+                cleanupOldSession();
+                
+                // Create new session with exponential backoff
+                long currentDelay = RETRY_DELAY_MS * (long)Math.pow(2, attempts);
+                if (attempts > 0) {
+                    logger.info("Waiting " + currentDelay + "ms before retry " + (attempts + 1));
+                    Thread.sleep(currentDelay);
                 }
                 
-                // Создаем новую сессию
+                // Create and configure new session
                 databaseSession = project.createDatabaseSession();
                 databaseSession.setLogLevel(SessionLog.INFO);
                 
-                // Настраиваем последовательности
+                // Configure session event listeners for connection monitoring
+                configureSessionEventListeners(databaseSession);
+                
+                // Setup sequences before login
                 setupSequences(databaseSession);
                 
-                // Логинимся в сессию
-                databaseSession.login();
+                // Login with timeout
+                try {
+                    databaseSession.login();
+                } catch (Exception e) {
+                    logger.warning("Login failed: " + e.getMessage());
+                    throw e;
+                }
                 
-                // Проверяем подключение
+                // Verify connection with transaction test
                 if (testConnection()) {
-                    logger.info("Сессия успешно создана и проверена");
+                    logger.info("Session successfully created and verified on attempt " + (attempts + 1));
                     return;
+                } else {
+                    throw new RuntimeException("Connection test failed after login");
                 }
                 
             } catch (Exception e) {
                 lastException = e;
                 attempts++;
-                logger.warning("Попытка " + attempts + " из " + MAX_RETRY_ATTEMPTS + 
-                             " создания сессии не удалась: " + e.getMessage());
                 
-                if (attempts < MAX_RETRY_ATTEMPTS) {
-                    try {
-                        Thread.sleep(RETRY_DELAY_MS);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
+                logger.warning("Session creation attempt " + attempts + "/" + MAX_RETRY_ATTEMPTS + 
+                             " failed: " + e.getMessage());
+                
+                if (attempts >= MAX_RETRY_ATTEMPTS) {
+                    break;
                 }
+                
+                // Clean up failed session
+                cleanupOldSession();
             }
         }
         
-        throw new RuntimeException("Не удалось создать сессию после " + MAX_RETRY_ATTEMPTS + 
-                                 " попыток", lastException);
+        String errorMsg = "Failed to create session after " + MAX_RETRY_ATTEMPTS + " attempts";
+        logger.severe(errorMsg);
+        throw new RuntimeException(errorMsg, lastException);
+    }
+    
+    private void cleanupOldSession() {
+        if (databaseSession != null) {
+            try {
+                if (databaseSession.isConnected()) {
+                    // Rollback any pending transaction
+                    if (databaseSession.isInTransaction()) {
+                        try {
+                            databaseSession.rollbackTransaction();
+                        } catch (Exception e) {
+                            logger.warning("Failed to rollback transaction: " + e.getMessage());
+                        }
+                    }
+                    
+                    // Logout from session
+                    databaseSession.logout();
+                }
+            } catch (Exception e) {
+                logger.warning("Error cleaning up old session: " + e.getMessage());
+            } finally {
+                databaseSession = null;
+            }
+        }
+    }
+    
+    private void configureSessionEventListeners(DatabaseSession session) {
+        // Запускаем периодическую проверку соединения
+        java.util.Timer connectionTimer = new java.util.Timer("ConnectionHealthCheck", true);
+        connectionTimer.scheduleAtFixedRate(new java.util.TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    if (!isSessionActive()) {
+                        logger.warning("Обнаружено неактивное соединение, попытка восстановления...");
+                        createAndInitializeSession();
+                    }
+                } catch (Exception e) {
+                    logger.severe("Ошибка при проверке состояния соединения: " + e.getMessage());
+                }
+            }
+        }, 30000, 30000); // Проверка каждые 30 секунд
+        
+        // Добавляем shutdown hook для корректного завершения таймера
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            connectionTimer.cancel();
+        }));
     }
     
     private boolean testConnection() {
+        if (databaseSession == null) {
+            return false;
+        }
+
         try {
-            // Пробуем выполнить простой запрос для проверки соединения
-            databaseSession.executeSQL("SELECT 1");
-            return true;
+            // Start a transaction to ensure connection is valid
+            databaseSession.beginTransaction();
+            try {
+                // Test both read and write capabilities
+                databaseSession.executeSQL("SELECT 1");
+                return true;
+            } finally {
+                // Always rollback test transaction
+                if (databaseSession.isInTransaction()) {
+                    databaseSession.rollbackTransaction();
+                }
+            }
         } catch (Exception e) {
             logger.warning("Тест подключения не пройден: " + e.getMessage());
+            // Try to cleanup any hanging transaction
+            try {
+                if (databaseSession.isInTransaction()) {
+                    databaseSession.rollbackTransaction();
+                }
+            } catch (Exception ignored) {
+                // Ignore cleanup errors
+            }
             return false;
         }
     }
