@@ -20,7 +20,7 @@ public class CorsFilter implements Filter {
         // Разрешаем CORS для всех доменов (в продакшене нужно ограничить)
         httpResponse.setHeader("Access-Control-Allow-Origin", "*");
         httpResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        httpResponse.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        httpResponse.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
         httpResponse.setHeader("Access-Control-Max-Age", "3600");
         
         // Обрабатываем preflight запросы

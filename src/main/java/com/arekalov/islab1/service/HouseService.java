@@ -21,6 +21,9 @@ public class HouseService {
     @Inject
     private HouseRepository houseRepository;
     
+    @Inject
+    private WebSocketService webSocketService;
+    
     /**
      * Получить все дома с пагинацией
      */
@@ -75,6 +78,9 @@ public class HouseService {
             HouseDTO responseDTO = toDTO(savedHouse);
             logger.info("HouseService.createHouse() - возвращаем DTO, id=" + responseDTO.getId());
             
+            // Отправляем уведомление через WebSocket
+            webSocketService.notifyHouseUpdate("CREATE", responseDTO);
+            
             return responseDTO;
             
         } catch (Exception e) {
@@ -110,6 +116,9 @@ public class HouseService {
             HouseDTO responseDTO = toDTO(updatedHouse);
             logger.info("HouseService.updateHouse() - возвращаем DTO, id=" + responseDTO.getId());
             
+            // Отправляем уведомление через WebSocket
+            webSocketService.notifyHouseUpdate("UPDATE", responseDTO);
+            
             return responseDTO;
             
         } catch (Exception e) {
@@ -141,6 +150,8 @@ public class HouseService {
                 } else {
                     logger.info("HouseService.deleteHouse() - дом успешно удален (квартир не было)");
                 }
+                // Отправляем уведомление через WebSocket
+                webSocketService.notifyHouseUpdate("DELETE", id);
                 return true;
             } else {
                 logger.info("HouseService.deleteHouse() - дом не найден для удаления");

@@ -26,7 +26,9 @@ dependencies {
     implementation("org.eclipse.persistence:org.eclipse.persistence.core:4.0.2")
     implementation("org.eclipse.persistence:org.eclipse.persistence.asm:9.4.0")
     
-    // Jackson JSR310 для поддержки Java 8 времени
+    // Jackson dependencies
+    implementation("com.fasterxml.jackson.core:jackson-core:2.15.2")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
     
     // PostgreSQL driver (provided by WildFly, but needed for compilation)

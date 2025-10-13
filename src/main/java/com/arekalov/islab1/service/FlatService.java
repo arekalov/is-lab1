@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
+import com.arekalov.islab1.dto.FlatDTO;
 
 /**
  * Сервис для работы с квартирами на нативном EclipseLink без транзакций
@@ -24,6 +25,9 @@ public class FlatService {
     
     @Inject
     private HouseRepository houseRepository;
+    
+    @Inject
+    private WebSocketService webSocketService;
     
     /**
      * Получить все квартиры с пагинацией
@@ -121,6 +125,10 @@ public class FlatService {
             Flat savedFlat = flatRepository.save(flat);
             
             logger.info("FlatNativeService.createFlat() - квартира создана с id=" + savedFlat.getId());
+            
+            // Отправляем уведомление через WebSocket
+            webSocketService.notifyFlatUpdate("CREATE", savedFlat);
+            
             return savedFlat;
             
         } catch (Exception e) {
@@ -182,6 +190,10 @@ public class FlatService {
             Flat savedFlat = flatRepository.save(existingFlat);
             
             logger.info("FlatNativeService.updateFlat() - квартира обновлена");
+            
+            // Отправляем уведомление через WebSocket
+            webSocketService.notifyFlatUpdate("UPDATE", savedFlat);
+            
             return savedFlat;
             
         } catch (Exception e) {
@@ -201,6 +213,8 @@ public class FlatService {
             
             if (deleted) {
                 logger.info("FlatNativeService.deleteFlat() - квартира успешно удалена");
+                // Отправляем уведомление через WebSocket
+                webSocketService.notifyFlatUpdate("DELETE", id);
             } else {
                 logger.info("FlatNativeService.deleteFlat() - квартира не найдена для удаления");
             }

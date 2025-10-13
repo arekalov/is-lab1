@@ -71,15 +71,26 @@ public class DatabaseSessionService {
         
         // Дополнительные настройки через свойства
         java.util.Properties properties = new java.util.Properties();
+        // Отключаем кэширование
+        properties.setProperty("eclipselink.cache.shared.default", "false");
+        properties.setProperty("eclipselink.cache.size.default", "0");
+        properties.setProperty("eclipselink.cache.type.default", "None");
+        // Всегда читаем актуальные данные из базы
+        properties.setProperty("eclipselink.refresh", "true");
+        
+        // Настройки соединений
         properties.setProperty("eclipselink.jdbc.connections.initial", "1");
         properties.setProperty("eclipselink.jdbc.connections.min", "1");
         properties.setProperty("eclipselink.jdbc.connections.max", "5");
         properties.setProperty("eclipselink.jdbc.read-connections.min", "1");
         properties.setProperty("eclipselink.jdbc.write-connections.min", "1");
         properties.setProperty("eclipselink.jdbc.timeout", "10");
+        
+        // Расширенное логирование
         properties.setProperty("eclipselink.logging.level", "FINE");
         properties.setProperty("eclipselink.logging.connection", "true");
         properties.setProperty("eclipselink.logging.exceptions", "true");
+        properties.setProperty("eclipselink.logging.sql", "FINE");
         login.setProperties(properties);
         
         // Создаем проект с дескрипторами
