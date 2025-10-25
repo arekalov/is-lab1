@@ -7,5 +7,5 @@ public enum View {
     YARD,
     BAD,
     GOOD,
-    TERRIBLE
+    TERRIBLE,
 }
