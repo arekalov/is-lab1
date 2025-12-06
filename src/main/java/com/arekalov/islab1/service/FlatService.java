@@ -6,6 +6,7 @@ import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.logging.Logger;
 import com.arekalov.islab1.dto.response.FlatResponseDTO;
 
 /**
- * Сервис для работы с квартирами на нативном EclipseLink без транзакций
+ * Сервис для работы с квартирами с поддержкой JPA транзакций
  */
 @ApplicationScoped
 public class FlatService {
@@ -95,7 +96,9 @@ public class FlatService {
     
     /**
      * Создать новую квартиру
+     * Транзакция REQUIRED - создает новую транзакцию или использует существующую
      */
+    @Transactional(Transactional.TxType.REQUIRED)
     public Flat createFlat(Flat flat) {
         logger.info("FlatNativeService.createFlat() - создание квартиры: " + flat.getName());
         
@@ -139,7 +142,9 @@ public class FlatService {
     
     /**
      * Обновить квартиру
+     * Транзакция REQUIRED - создает новую транзакцию или использует существующую
      */
+    @Transactional(Transactional.TxType.REQUIRED)
     public Flat updateFlat(Long id, Flat updatedFlat) {
         logger.info("FlatNativeService.updateFlat() - обновление квартиры с id=" + id);
         
@@ -204,7 +209,9 @@ public class FlatService {
     
     /**
      * Удалить квартиру
+     * Транзакция REQUIRED - создает новую транзакцию или использует существующую
      */
+    @Transactional(Transactional.TxType.REQUIRED)
     public boolean deleteFlat(Long id) {
         logger.info("FlatNativeService.deleteFlat() - удаление квартиры с id=" + id);
         

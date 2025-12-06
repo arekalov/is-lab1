@@ -7,12 +7,13 @@ import com.arekalov.islab1.mapper.HouseMapper;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
 /**
- * Сервис для работы с домами
+ * Сервис для работы с домами с поддержкой JPA транзакций
  */
 @ApplicationScoped
 public class HouseService {
@@ -62,8 +63,10 @@ public class HouseService {
     }
     
     /**
-     * Создать новый дом (БЕЗ ТРАНЗАКЦИЙ)
+     * Создать новый дом
+     * Транзакция REQUIRED - создает новую транзакцию или использует существующую
      */
+    @Transactional(Transactional.TxType.REQUIRED)
     public HouseResponseDTO createHouse(CreateHouseRequest request) {
         logger.info("HouseService.createHouse() - начало, name=" + request.getName());
         
@@ -98,8 +101,10 @@ public class HouseService {
     }
     
     /**
-     * Обновить дом (БЕЗ ТРАНЗАКЦИЙ)
+     * Обновить дом
+     * Транзакция REQUIRED - создает новую транзакцию или использует существующую
      */
+    @Transactional(Transactional.TxType.REQUIRED)
     public HouseResponseDTO updateHouse(Long id, CreateHouseRequest request) {
         logger.info("HouseService.updateHouse() - начало, id=" + id + ", name=" + request.getName());
         
@@ -137,7 +142,9 @@ public class HouseService {
     
     /**
      * Удалить дом (с каскадным удалением квартир)
+     * Транзакция REQUIRED - создает новую транзакцию или использует существующую
      */
+    @Transactional(Transactional.TxType.REQUIRED)
     public boolean deleteHouse(Long id) {
         logger.info("HouseService.deleteHouse() - начало каскадного удаления дома с id=" + id);
         
