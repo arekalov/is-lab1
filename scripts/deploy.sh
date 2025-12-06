@@ -3,15 +3,20 @@
 
 set -e  # Остановиться при первой ошибке
 
+# Определяем корневую директорию проекта (родительская от scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 echo "🚀 Начинаем деплой..."
 
 # Сборка проекта
 echo "📦 Сборка проекта..."
+cd "$PROJECT_ROOT"
 ./gradlew clean build
 
 # Очистка сервера
 echo "🧹 Очистка сервера..."
-./scripts/clean_server.sh
+"$SCRIPT_DIR/clean_server.sh"
 
 # Остановка всех Java процессов на сервере
 echo "⏹️  Остановка Java процессов..."
@@ -24,7 +29,7 @@ ssh ifmo "rm -rf ~/Web/lab3/wildfly-preview-26.1.3.Final/standalone/tmp/*"
 
 # Деплой WAR файла
 echo "📤 Деплой WAR файла..."
-scp build/libs/is-lab1.war ifmo:~/Web/lab3/wildfly-preview-26.1.3.Final/standalone/deployments
+scp "$PROJECT_ROOT/build/libs/is-lab1.war" ifmo:~/Web/lab3/wildfly-preview-26.1.3.Final/standalone/deployments
 
 echo "✅ Деплой завершен!"
 echo ""
