@@ -2,39 +2,48 @@ package com.arekalov.islab1.dto.request;
 
 import com.arekalov.islab1.entity.Furnish;
 import com.arekalov.islab1.entity.View;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO для создания новой квартиры
+ * Request DTO для обновления квартиры
  */
 @Data
 @NoArgsConstructor
-public class CreateFlatRequest {
+@AllArgsConstructor
+public class UpdateFlatRequest {
     @NotBlank(message = "Название не может быть пустым")
     private String name;
     
     @NotNull(message = "Координаты не могут быть null")
+    @Valid
     private CreateCoordinatesRequest coordinates;
     
-    @Min(value = 1, message = "Площадь должна быть больше 0")
+    @NotNull(message = "Площадь не может быть null")
+    @Positive(message = "Площадь должна быть больше 0")
     private Long area;
     
-    @Min(value = 1, message = "Цена должна быть больше 0")
+    @NotNull(message = "Цена не может быть null")
+    @Positive(message = "Цена должна быть больше 0")
     @Max(value = 581208244, message = "Максимальная цена: 581208244")
     private Long price;
     
     private Boolean balcony;
     
-    @Min(value = 1, message = "Время до метро должно быть больше 0")
+    @NotNull(message = "Время до метро не может быть null")
+    @Positive(message = "Время до метро должно быть больше 0")
     private Long timeToMetroOnFoot;
     
+    @NotNull(message = "Количество комнат не может быть null")
     @Min(value = 1, message = "Количество комнат должно быть больше 0")
     @Max(value = 13, message = "Максимальное количество комнат: 13")
     private Integer numberOfRooms;
     
-    @Min(value = 1, message = "Жилая площадь должна быть больше 0")
+    @NotNull(message = "Жилая площадь не может быть null")
+    @Positive(message = "Жилая площадь должна быть больше 0")
     private Long livingSpace;
     
     @NotNull(message = "Тип мебели не может быть null")
@@ -44,8 +53,9 @@ public class CreateFlatRequest {
     private View view;
     
     @NotNull(message = "Этаж не может быть null")
-    @Min(value = 1, message = "Этаж должен быть больше 0")
+    @Positive(message = "Этаж должен быть больше 0")
     private Integer floor;
     
     private Long houseId;
 }
+

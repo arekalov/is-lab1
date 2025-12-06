@@ -3,7 +3,7 @@ package com.arekalov.islab1.controller;
 import com.arekalov.islab1.dto.request.CreateHouseRequest;
 import com.arekalov.islab1.dto.response.ErrorResponse;
 import com.arekalov.islab1.dto.response.PagedResponse;
-import com.arekalov.islab1.dto.HouseDTO;
+import com.arekalov.islab1.dto.response.HouseResponseDTO;
 import com.arekalov.islab1.service.HouseService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -43,11 +43,11 @@ public class HouseController {
             }
             
             // Получаем данные с пагинацией
-            List<HouseDTO> houses = houseService.getAllHouses(page, size);
+            List<HouseResponseDTO> houses = houseService.getAllHouses(page, size);
             long total = houseService.countHouses();
             
             // Создаем пагинированный ответ
-            PagedResponse<HouseDTO> pagedResponse = new PagedResponse<>(houses, total, page, size);
+            PagedResponse<HouseResponseDTO> pagedResponse = new PagedResponse<>(houses, total, page, size);
             
             return Response.ok(pagedResponse).build();
         } catch (Exception e) {
@@ -64,7 +64,7 @@ public class HouseController {
     @Path("/{id}")
     public Response getHouseById(@PathParam("id") Long id) {
         try {
-            HouseDTO house = houseService.getHouseById(id);
+            HouseResponseDTO house = houseService.getHouseById(id);
             if (house != null) {
                 return Response.ok(house).build();
             } else {
@@ -85,7 +85,7 @@ public class HouseController {
     @POST
     public Response createHouse(@Valid CreateHouseRequest request) {
         try {
-            HouseDTO house = houseService.createHouse(request);
+            HouseResponseDTO house = houseService.createHouse(request);
             return Response.status(Response.Status.CREATED).entity(house).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -101,7 +101,7 @@ public class HouseController {
     @Path("/{id}")
     public Response updateHouse(@PathParam("id") Long id, @Valid CreateHouseRequest request) {
         try {
-            HouseDTO house = houseService.updateHouse(id, request);
+            HouseResponseDTO house = houseService.updateHouse(id, request);
             if (house != null) {
                 return Response.ok(house).build();
             } else {
@@ -151,7 +151,7 @@ public class HouseController {
                     .build();
             }
             
-            List<HouseDTO> houses = houseService.findByNameContaining(name);
+            List<HouseResponseDTO> houses = houseService.findByNameContaining(name);
             return Response.ok(houses).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)

@@ -1,7 +1,7 @@
 package com.arekalov.islab1.service;
 
-import com.arekalov.islab1.pojo.Flat;
-import com.arekalov.islab1.pojo.House;
+import com.arekalov.islab1.entity.Flat;
+import com.arekalov.islab1.entity.House;
 import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
-import com.arekalov.islab1.dto.FlatDTO;
+import com.arekalov.islab1.dto.response.FlatResponseDTO;
 
 /**
  * Сервис для работы с квартирами на нативном EclipseLink без транзакций
@@ -104,7 +104,7 @@ public class FlatService {
             validateFlat(flat);
             
             // Устанавливаем дату создания
-            flat.setCreationDate(LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()));
+            flat.setCreationDate(LocalDateTime.now());
             
             // Проверяем и создаем координаты, если нужно
             if (flat.getCoordinates() != null && flat.getCoordinates().getId() == null) {
@@ -253,6 +253,10 @@ public class FlatService {
         
         if (flat.getLivingSpace() != null && flat.getLivingSpace() <= 0) {
             throw new RuntimeException("Жилая площадь должна быть больше 0");
+        }
+        
+        if (flat.getFloor() == null || flat.getFloor() <= 0) {
+            throw new RuntimeException("Этаж должен быть больше 0");
         }
         
         if (flat.getCoordinates() == null) {

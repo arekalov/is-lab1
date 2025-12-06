@@ -1,26 +1,26 @@
-package com.arekalov.islab1.dto;
+package com.arekalov.islab1.dto.response;
 
-import com.arekalov.islab1.pojo.Furnish;
-import com.arekalov.islab1.pojo.View;
+import com.arekalov.islab1.entity.Furnish;
+import com.arekalov.islab1.entity.View;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 
 /**
- * DTO для передачи данных о квартире
+ * Response DTO для передачи данных о квартире
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FlatDTO {
+public class FlatResponseDTO {
     private Long id;
     private String name;
-    private CoordinatesDTO coordinates;
+    private CoordinatesResponseDTO coordinates;
     
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-    private ZonedDateTime creationDate;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime creationDate;
     
     private Long area;
     private Long price;
@@ -30,5 +30,7 @@ public class FlatDTO {
     private Long livingSpace;
     private Furnish furnish;
     private View view;
-    private HouseDTO house;
+    private Integer floor;
+    private HouseResponseDTO house;
 }
+

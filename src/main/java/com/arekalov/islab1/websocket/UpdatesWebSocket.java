@@ -1,7 +1,7 @@
 package com.arekalov.islab1.websocket;
 
 import com.arekalov.islab1.config.ObjectMapperProducer;
-import com.arekalov.islab1.websocket.dto.WebSocketMessage;
+import com.arekalov.islab1.dto.websocket.WebSocketMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

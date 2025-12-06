@@ -26,6 +26,9 @@ dependencies {
     implementation("org.eclipse.persistence:org.eclipse.persistence.core:4.0.2")
     implementation("org.eclipse.persistence:org.eclipse.persistence.asm:9.4.0")
     
+    // EclipseLink JPA (для работы JPA аннотаций и EntityManager)
+    implementation("org.eclipse.persistence:org.eclipse.persistence.jpa:4.0.2")
+    
     // Jackson dependencies
     implementation("com.fasterxml.jackson.core:jackson-core:2.15.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")

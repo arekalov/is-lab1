@@ -1,8 +1,9 @@
 package com.arekalov.islab1.service;
 
 import com.arekalov.islab1.dto.request.CreateHouseRequest;
-import com.arekalov.islab1.dto.HouseDTO;
-import com.arekalov.islab1.pojo.House;
+import com.arekalov.islab1.dto.response.HouseResponseDTO;
+import com.arekalov.islab1.entity.House;
+import com.arekalov.islab1.mapper.HouseMapper;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -11,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
 /**
- * Сервис для работы с домами через EclipseLink (БЕЗ ТРАНЗАКЦИЙ, БЕЗ JPA!)
+ * Сервис для работы с домами
  */
 @ApplicationScoped
 public class HouseService {
@@ -22,14 +23,17 @@ public class HouseService {
     private HouseRepository houseRepository;
     
     @Inject
+    private HouseMapper houseMapper;
+    
+    @Inject
     private WebSocketService webSocketService;
     
     /**
      * Получить все дома с пагинацией
      */
-    public List<HouseDTO> getAllHouses(int page, int size) {
+    public List<HouseResponseDTO> getAllHouses(int page, int size) {
         return houseRepository.findAll(page, size).stream()
-            .map(this::toDTO)
+            .map(houseMapper::toResponseDTO)
             .collect(Collectors.toList());
     }
     
@@ -43,29 +47,33 @@ public class HouseService {
     /**
      * Получить все дома (без пагинации) - для обратной совместимости
      */
-    public List<HouseDTO> getAllHouses() {
+    public List<HouseResponseDTO> getAllHouses() {
         return houseRepository.findAll().stream()
-            .map(this::toDTO)
+            .map(houseMapper::toResponseDTO)
             .collect(Collectors.toList());
     }
     
     /**
      * Получить дом по ID
      */
-    public HouseDTO getHouseById(Long id) {
+    public HouseResponseDTO getHouseById(Long id) {
         House house = houseRepository.findById(id);
-        return house != null ? toDTO(house) : null;
+        return house != null ? houseMapper.toResponseDTO(house) : null;
     }
     
     /**
      * Создать новый дом (БЕЗ ТРАНЗАКЦИЙ)
      */
-    public HouseDTO createHouse(CreateHouseRequest request) {
+    public HouseResponseDTO createHouse(CreateHouseRequest request) {
         logger.info("HouseService.createHouse() - начало, name=" + request.getName());
         
         try {
-            // Создаем объект House с данными из запроса
-            House house = new House(request.getName(), request.getYear(), request.getNumberOfFlatsOnFloor());
+            // Создаем объект House с данными из запроса используя Builder
+            House house = House.builder()
+                .name(request.getName())
+                .year(request.getYear())
+                .numberOfFlatsOnFloor(request.getNumberOfFlatsOnFloor())
+                .build();
             logger.info("HouseService.createHouse() - создан объект House, name=" + house.getName());
             
             // Сохраняем через EclipseLink (БЕЗ ТРАНЗАКЦИЙ!)
@@ -75,7 +83,7 @@ public class HouseService {
             logger.info("HouseService.createHouse() - после сохранения, id=" + savedHouse.getId());
             
             // Возвращаем DTO с реальными данными
-            HouseDTO responseDTO = toDTO(savedHouse);
+            HouseResponseDTO responseDTO = houseMapper.toResponseDTO(savedHouse);
             logger.info("HouseService.createHouse() - возвращаем DTO, id=" + responseDTO.getId());
             
             // Отправляем уведомление через WebSocket
@@ -92,7 +100,7 @@ public class HouseService {
     /**
      * Обновить дом (БЕЗ ТРАНЗАКЦИЙ)
      */
-    public HouseDTO updateHouse(Long id, CreateHouseRequest request) {
+    public HouseResponseDTO updateHouse(Long id, CreateHouseRequest request) {
         logger.info("HouseService.updateHouse() - начало, id=" + id + ", name=" + request.getName());
         
         try {
@@ -113,7 +121,7 @@ public class HouseService {
             House updatedHouse = houseRepository.save(existingHouse);
             
             // Возвращаем DTO
-            HouseDTO responseDTO = toDTO(updatedHouse);
+            HouseResponseDTO responseDTO = houseMapper.toResponseDTO(updatedHouse);
             logger.info("HouseService.updateHouse() - возвращаем DTO, id=" + responseDTO.getId());
             
             // Отправляем уведомление через WebSocket
@@ -167,9 +175,9 @@ public class HouseService {
     /**
      * Поиск домов по названию
      */
-    public List<HouseDTO> findByNameContaining(String substring) {
+    public List<HouseResponseDTO> findByNameContaining(String substring) {
         return houseRepository.findByNameContaining(substring).stream()
-            .map(this::toDTO)
+            .map(houseMapper::toResponseDTO)
             .collect(Collectors.toList());
     }
     
@@ -178,17 +186,5 @@ public class HouseService {
      */
     public long getFlatsCount(Long houseId) {
         return houseRepository.getFlatsCount(houseId);
-    }
-    
-    /**
-     * Конвертация в DTO
-     */
-    private HouseDTO toDTO(House house) {
-        return new HouseDTO(
-            house.getId(),
-            house.getName(),
-            house.getYear(),
-            house.getNumberOfFlatsOnFloor()
-        );
     }
 }

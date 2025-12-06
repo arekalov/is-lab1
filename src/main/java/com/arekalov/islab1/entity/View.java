@@ -1,4 +1,4 @@
-package com.arekalov.islab1.pojo;
+package com.arekalov.islab1.entity;
 
 /**
  * Вид из окна

@@ -1,25 +1,18 @@
 package com.arekalov.islab1.repository;
 
-import org.eclipse.persistence.sessions.DatabaseSession;
-import org.eclipse.persistence.queries.ReadAllQuery;
-import org.eclipse.persistence.queries.ReadObjectQuery;
-import org.eclipse.persistence.queries.DataReadQuery;
-import org.eclipse.persistence.expressions.ExpressionBuilder;
-import org.eclipse.persistence.sessions.DatabaseRecord;
-
-import com.arekalov.islab1.pojo.House;
-import com.arekalov.islab1.service.DatabaseSessionService;
+import com.arekalov.islab1.entity.House;
+import com.arekalov.islab1.service.EntityManagerService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import javax.naming.InitialContext;
-import javax.sql.DataSource;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
+
 import java.util.List;
-import java.util.ArrayList;
 import java.util.logging.Logger;
 
 /**
- * Repository для работы с домами через EclipseLink API (БЕЗ JPA, БЕЗ ТРАНЗАКЦИЙ!)
- * Использует централизованный DatabaseSessionService для управления сессией
+ * Репозиторий для работы с домами через JPA API
  */
 @ApplicationScoped
 public class HouseRepository {
@@ -27,35 +20,35 @@ public class HouseRepository {
     private static final Logger logger = Logger.getLogger(HouseRepository.class.getName());
     
     @Inject
-    private DatabaseSessionService sessionService;
+    private EntityManagerService entityManagerService;
     
     /**
-     * Получить активную DatabaseSession
+     * Получить EntityManager
      */
-    private DatabaseSession getSession() {
-        return sessionService.getDatabaseSession();
+    private EntityManager getEntityManager() {
+        return entityManagerService.getEntityManager();
     }
     
     /**
-     * Сохранить дом без JPA и без транзакций
+     * Сохранить дом с транзакцией
      */
+    @Transactional
     public House save(House house) {
         logger.info("HouseRepository.save() - сохранение дома: " + house.getName());
         
         try {
-            DatabaseSession session = getSession();
+            EntityManager em = getEntityManager();
             
             if (house.getId() == null) {
-                // INSERT - EclipseLink автоматически сгенерирует ID
-                logger.info("HouseRepository.save() - выполняем INSERT");
-                session.insertObject(house);
+                // Новый дом - persist
+                em.persist(house);
+                logger.info("HouseRepository.save() - дом создан с id=" + house.getId());
             } else {
-                // UPDATE
-                logger.info("HouseRepository.save() - выполняем UPDATE для id=" + house.getId());
-                session.updateObject(house);
+                // Существующий дом - merge
+                house = em.merge(house);
+                logger.info("HouseRepository.save() - дом обновлен с id=" + house.getId());
             }
             
-            logger.info("HouseRepository.save() - дом сохранен, id=" + house.getId());
             return house;
             
         } catch (Exception e) {
@@ -67,7 +60,6 @@ public class HouseRepository {
     /**
      * Найти все дома с пагинацией
      */
-    @SuppressWarnings("unchecked")
     public List<House> findAll(int page, int size) {
         logger.info("HouseRepository.findAll() - поиск домов с пагинацией: page=" + page + ", size=" + size);
         
@@ -78,49 +70,27 @@ public class HouseRepository {
         }
         if (size <= 0) {
             logger.warning("HouseRepository.findAll() - size должен быть положительным: " + size);
-            size = 10; // default size
+            size = 10;
         }
         if (size > 100) {
             logger.warning("HouseRepository.findAll() - size слишком большой: " + size);
-            size = 100; // max size
+            size = 100;
         }
         
         try {
-            DatabaseSession session = getSession();
+            EntityManager em = getEntityManager();
             
-            // Рассчитываем offset
-            int offset = page * size;
-            logger.info("HouseRepository.findAll() - рассчитанные параметры: offset=" + offset + ", limit=" + size);
+            TypedQuery<House> query = em.createQuery("SELECT h FROM House h ORDER BY h.id ASC", House.class);
+            query.setFirstResult(page * size);
+            query.setMaxResults(size);
             
-            // Создаем прямой SQL запрос с LIMIT и OFFSET
-            String sql = "SELECT id, name, year, number_of_flats_on_floor " +
-                        "FROM houses ORDER BY id ASC LIMIT " + size + " OFFSET " + offset;
-            
-            logger.info("HouseRepository.findAll() - выполняем SQL: " + sql);
-            
-            // Создаем DataReadQuery для выполнения прямого SQL
-            DataReadQuery dataQuery = new DataReadQuery();
-            dataQuery.setSQLString(sql);
-            
-            // Выполняем запрос и получаем результат
-            @SuppressWarnings("unchecked")
-            List<DatabaseRecord> records = (List<DatabaseRecord>) session.executeQuery(dataQuery);
-            
-            // Конвертируем DatabaseRecord в объекты House
-            List<House> houses = new ArrayList<>();
-            for (DatabaseRecord record : records) {
-                House house = convertRecordToHouse(record);
-                if (house != null) {
-                    houses.add(house);
-                }
-            }
-            
+            List<House> houses = query.getResultList();
             logger.info("HouseRepository.findAll() - найдено домов: " + houses.size());
             return houses;
             
         } catch (Exception e) {
             logger.severe("Ошибка поиска домов с пагинацией: " + e.getMessage());
-            e.printStackTrace(); // Добавляем stack trace для отладки
+            e.printStackTrace();
             throw new RuntimeException("Error finding houses with pagination: " + e.getMessage(), e);
         }
     }
@@ -132,13 +102,9 @@ public class HouseRepository {
         logger.info("HouseRepository.count() - подсчет общего количества домов");
         
         try {
-            DatabaseSession session = getSession();
-            
-            ReadAllQuery query = new ReadAllQuery(House.class);
-            @SuppressWarnings("unchecked")
-            List<House> houses = (List<House>) session.executeQuery(query);
-            
-            long count = houses.size();
+            EntityManager em = getEntityManager();
+            TypedQuery<Long> query = em.createQuery("SELECT COUNT(h) FROM House h", Long.class);
+            Long count = query.getSingleResult();
             logger.info("HouseRepository.count() - общее количество домов: " + count);
             return count;
             
@@ -149,21 +115,16 @@ public class HouseRepository {
     }
     
     /**
-     * Найти все дома (без пагинации) - для обратной совместимости
+     * Найти все дома (без пагинации)
      */
-    @SuppressWarnings("unchecked")
     public List<House> findAll() {
         logger.info("HouseRepository.findAll() - поиск всех домов");
         
         try {
-            DatabaseSession session = getSession();
-            
-            ReadAllQuery query = new ReadAllQuery(House.class);
-            query.addOrdering(query.getExpressionBuilder().get("id"));
-            
-            List<House> houses = (List<House>) session.executeQuery(query);
+            EntityManager em = getEntityManager();
+            TypedQuery<House> query = em.createQuery("SELECT h FROM House h ORDER BY h.id", House.class);
+            List<House> houses = query.getResultList();
             logger.info("HouseRepository.findAll() - найдено домов: " + houses.size());
-            
             return houses;
             
         } catch (Exception e) {
@@ -179,12 +140,8 @@ public class HouseRepository {
         logger.info("HouseRepository.findById() - поиск дома с id=" + id);
         
         try {
-            DatabaseSession session = getSession();
-            
-            ReadObjectQuery query = new ReadObjectQuery(House.class);
-            query.setSelectionCriteria(new ExpressionBuilder().get("id").equal(id));
-            
-            House house = (House) session.executeQuery(query);
+            EntityManager em = getEntityManager();
+            House house = em.find(House.class, id);
             
             if (house != null) {
                 logger.info("HouseRepository.findById() - дом найден: " + house.getName());
@@ -207,27 +164,13 @@ public class HouseRepository {
         logger.info("HouseRepository.getFlatsCount() - подсчет квартир для дома с id=" + houseId);
         
         try {
-            // Получаем DataSource напрямую из JNDI для выполнения COUNT запроса
-            InitialContext ctx = new InitialContext();
-            DataSource dataSource = (DataSource) ctx.lookup("java:jboss/datasources/flatsPu");
-            
-            String sql = "SELECT COUNT(*) FROM flats WHERE house_id = ?";
-            
-            try (java.sql.Connection connection = dataSource.getConnection();
-                 java.sql.PreparedStatement stmt = connection.prepareStatement(sql)) {
-                
-                stmt.setLong(1, houseId);
-                
-                try (java.sql.ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        long flatsCount = rs.getLong(1);
-                        logger.info("HouseRepository.getFlatsCount() - найдено квартир: " + flatsCount);
-                        return flatsCount;
-                    }
-                }
-            }
-            
-            return 0;
+            EntityManager em = getEntityManager();
+            TypedQuery<Long> query = em.createQuery(
+                "SELECT COUNT(f) FROM Flat f WHERE f.house.id = :houseId", Long.class);
+            query.setParameter("houseId", houseId);
+            Long count = query.getSingleResult();
+            logger.info("HouseRepository.getFlatsCount() - найдено квартир: " + count);
+            return count;
             
         } catch (Exception e) {
             logger.severe("Ошибка подсчета квартир в доме: " + e.getMessage());
@@ -245,24 +188,16 @@ public class HouseRepository {
     /**
      * Удалить все квартиры в доме
      */
+    @Transactional
     public void deleteFlatsInHouse(Long houseId) {
         logger.info("HouseRepository.deleteFlatsInHouse() - удаление всех квартир в доме с id=" + houseId);
         
         try {
-            // Получаем DataSource напрямую из JNDI для выполнения DELETE запроса
-            InitialContext ctx = new InitialContext();
-            DataSource dataSource = (DataSource) ctx.lookup("java:jboss/datasources/flatsPu");
-            
-            String sql = "DELETE FROM flats WHERE house_id = ?";
-            
-            try (java.sql.Connection connection = dataSource.getConnection();
-                 java.sql.PreparedStatement stmt = connection.prepareStatement(sql)) {
-                
-                stmt.setLong(1, houseId);
-                
-                int deletedCount = stmt.executeUpdate();
-                logger.info("HouseRepository.deleteFlatsInHouse() - удалено квартир: " + deletedCount);
-            }
+            EntityManager em = getEntityManager();
+            int deletedCount = em.createQuery("DELETE FROM Flat f WHERE f.house.id = :houseId")
+                .setParameter("houseId", houseId)
+                .executeUpdate();
+            logger.info("HouseRepository.deleteFlatsInHouse() - удалено квартир: " + deletedCount);
             
         } catch (Exception e) {
             logger.severe("Ошибка удаления квартир в доме: " + e.getMessage());
@@ -273,13 +208,14 @@ public class HouseRepository {
     /**
      * Удалить дом с каскадным удалением связанных квартир
      */
+    @Transactional
     public boolean deleteById(Long id) {
         logger.info("HouseRepository.deleteById() - каскадное удаление дома с id=" + id);
         
         try {
-            DatabaseSession session = getSession();
+            EntityManager em = getEntityManager();
             
-        House house = findById(id);
+            House house = em.find(House.class, id);
             if (house == null) {
                 logger.info("HouseRepository.deleteById() - дом не найден для удаления");
                 return false;
@@ -295,7 +231,7 @@ public class HouseRepository {
             
             // Теперь удаляем сам дом
             logger.info("HouseRepository.deleteById() - выполняем DELETE дома");
-            session.deleteObject(house);
+            em.remove(house);
             logger.info("HouseRepository.deleteById() - дом и все связанные квартиры успешно удалены");
             return true;
             
@@ -308,58 +244,22 @@ public class HouseRepository {
     /**
      * Поиск по названию
      */
-    @SuppressWarnings("unchecked")
     public List<House> findByNameContaining(String substring) {
         logger.info("HouseRepository.findByNameContaining() - поиск домов с подстрокой: " + substring);
         
         try {
-            DatabaseSession session = getSession();
+            EntityManager em = getEntityManager();
+            TypedQuery<House> query = em.createQuery(
+                "SELECT h FROM House h WHERE LOWER(h.name) LIKE :search", House.class);
+            query.setParameter("search", "%" + substring.toLowerCase() + "%");
             
-            ReadAllQuery query = new ReadAllQuery(House.class);
-            query.setSelectionCriteria(
-                new ExpressionBuilder().get("name").toLowerCase()
-                    .like("%" + substring.toLowerCase() + "%")
-            );
-            
-            List<House> houses = (List<House>) session.executeQuery(query);
+            List<House> houses = query.getResultList();
             logger.info("HouseRepository.findByNameContaining() - найдено домов: " + houses.size());
-            
             return houses;
             
         } catch (Exception e) {
             logger.severe("Ошибка поиска домов по названию: " + e.getMessage());
             throw new RuntimeException("Error finding houses by name: " + e.getMessage(), e);
         }
-    }
-    
-    /**
-     * Конвертирует DatabaseRecord из базы данных в объект House
-     */
-    private House convertRecordToHouse(DatabaseRecord record) {
-        try {
-            House house = new House();
-            
-            // Основные поля
-            house.setId(((Number) record.get("id")).longValue());
-            house.setName((String) record.get("name"));
-            house.setYear(((Number) record.get("year")).intValue());
-            house.setNumberOfFlatsOnFloor(((Number) record.get("number_of_flats_on_floor")).intValue());
-            
-            return house;
-            
-        } catch (Exception e) {
-            logger.severe("Ошибка конвертации Record в House: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
-    
-    /**
-     * Получить DatabaseSession для использования в других репозиториях
-     * @deprecated Используйте DatabaseSessionService напрямую
-     */
-    @Deprecated
-    public DatabaseSession getDatabaseSession() {
-        return getSession();
     }
 }

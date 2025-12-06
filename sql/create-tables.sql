@@ -34,6 +34,7 @@ CREATE TABLE flats (
     furnish VARCHAR(255) NOT NULL,
     view VARCHAR(255) NOT NULL,
     living_space BIGINT NOT NULL CHECK (living_space > 0),
+    floor INTEGER NOT NULL CHECK (floor > 0),
     house_id BIGINT REFERENCES houses(id)
 );
 
@@ -42,6 +43,8 @@ CREATE INDEX idx_flats_coordinates ON flats(coordinates_id);
 CREATE INDEX idx_flats_house ON flats(house_id);
 CREATE INDEX idx_flats_name ON flats(name);
 CREATE INDEX idx_houses_name ON houses(name);
+CREATE INDEX idx_flats_house_floor ON flats(house_id, floor);
+CREATE INDEX idx_flats_view ON flats(view);
 
 -- Вставляем тестовые данные
 INSERT INTO coordinates (x, y) VALUES (100, 200.5);
@@ -50,8 +53,8 @@ INSERT INTO coordinates (x, y) VALUES (150, 300.7);
 INSERT INTO houses (name, year, number_of_flats_on_floor) VALUES ('Дом на Невском', 2020, 4);
 INSERT INTO houses (name, year, number_of_flats_on_floor) VALUES ('ЖК Северный', 2019, 6);
 
-INSERT INTO flats (name, coordinates_id, area, price, balcony, time_to_metro_on_foot, number_of_rooms, furnish, view, living_space, house_id)
-VALUES ('Квартира 1', 1, 50, 5000000, true, 10, 2, 'DESIGNER', 'YARD', 35, 1);
+INSERT INTO flats (name, coordinates_id, area, price, balcony, time_to_metro_on_foot, number_of_rooms, furnish, view, living_space, floor, house_id)
+VALUES ('Квартира 1', 1, 50, 5000000, true, 10, 2, 'DESIGNER', 'YARD', 35, 1, 1);
 
-INSERT INTO flats (name, coordinates_id, area, price, balcony, time_to_metro_on_foot, number_of_rooms, furnish, view, living_space, house_id)
-VALUES ('Квартира 2', 2, 70, 7000000, false, 15, 3, 'FINE', 'STREET', 50, 2);
+INSERT INTO flats (name, coordinates_id, area, price, balcony, time_to_metro_on_foot, number_of_rooms, furnish, view, living_space, floor, house_id)
+VALUES ('Квартира 2', 2, 70, 7000000, false, 15, 3, 'FINE', 'GOOD', 50, 2, 2);

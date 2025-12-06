@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    Файл jboss-deployment-structure.xml
+    Указывает WildFly использовать EclipseLink из WAR файла вместо встроенного Hibernate
+-->
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.2">
+    <deployment>
+        <!-- Исключаем только Hibernate ORM, но оставляем Hibernate Validator -->
+        <exclusions>
+            <!-- Исключаем Hibernate ORM (JPA провайдер) -->
+            <module name="org.hibernate" slot="main"/>
+            <module name="org.hibernate.envers"/>
+        </exclusions>
+        
+        <!-- Добавляем нужные модули из WildFly -->
+        <dependencies>
+            <!-- PostgreSQL драйвер из WildFly -->
+            <module name="org.postgresql"/>
+            <!-- Hibernate Validator для Bean Validation -->
+            <module name="org.hibernate.validator"/>
+        </dependencies>
+    </deployment>
+</jboss-deployment-structure>
+
