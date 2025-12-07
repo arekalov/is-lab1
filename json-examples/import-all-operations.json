@@ -1,0 +1,56 @@
+[
+  {
+    "type": "HOUSE",
+    "operation": "CREATE",
+    "data": {
+      "name": "ЖК Новострой",
+      "year": 2024,
+      "numberOfFlatsOnFloor": 8
+    }
+  },
+  {
+    "type": "FLAT",
+    "operation": "CREATE",
+    "data": {
+      "name": "Квартира 301",
+      "floor": 3,
+      "area": 70,
+      "price": 8000000,
+      "balcony": true,
+      "timeToMetroOnFoot": 5,
+      "numberOfRooms": 3,
+      "livingSpace": 50,
+      "furnish": "FINE",
+      "view": "STREET",
+      "coordinates": {
+        "x": 300.0,
+        "y": 400
+      }
+    }
+  },
+  {
+    "type": "FLAT",
+    "data": {
+      "id": 2,
+      "name": "Переименованная квартира",
+      "price": 9000000
+    }
+  },
+  {
+    "type": "FLAT",
+    "operation": "DELETE",
+    "data": {
+      "id": 5
+    }
+  },
+  {
+    "type": "HOUSE",
+    "data": {
+      "id": 3,
+      "name": "Обновленный дом",
+      "year": 2023,
+      "numberOfFlatsOnFloor": 6
+    }
+  }
+]
+

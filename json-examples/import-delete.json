@@ -1,0 +1,17 @@
+[
+  {
+    "type": "FLAT",
+    "operation": "DELETE",
+    "data": {
+      "id": 1
+    }
+  },
+  {
+    "type": "HOUSE",
+    "operation": "DELETE",
+    "data": {
+      "id": 2
+    }
+  }
+]
+

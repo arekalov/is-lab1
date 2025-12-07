@@ -1,0 +1,61 @@
+[
+  {
+    "name": "Квартира смешанная 401",
+    "floor": 4,
+    "area": 75,
+    "price": 8500000,
+    "balcony": true,
+    "timeToMetroOnFoot": 8,
+    "numberOfRooms": 3,
+    "livingSpace": 52,
+    "furnish": "FINE",
+    "view": "STREET",
+    "coordinates": {
+      "x": 200.0,
+      "y": 400
+    },
+    "house": {
+      "name": "ЖК Премиум",
+      "year": 2023,
+      "numberOfFlatsOnFloor": 5
+    }
+  },
+  {
+    "name": "Квартира без дома 205",
+    "floor": 2,
+    "area": 45,
+    "price": 4200000,
+    "balcony": false,
+    "timeToMetroOnFoot": 7,
+    "numberOfRooms": 2,
+    "livingSpace": 30,
+    "furnish": "LITTLE",
+    "view": "YARD",
+    "coordinates": {
+      "x": 205.5,
+      "y": 405
+    }
+  },
+  {
+    "name": "Люкс 701",
+    "floor": 7,
+    "area": 95,
+    "price": 12000000,
+    "balcony": true,
+    "timeToMetroOnFoot": 3,
+    "numberOfRooms": 3,
+    "livingSpace": 68,
+    "furnish": "DESIGNER",
+    "view": "GOOD",
+    "coordinates": {
+      "x": 210.0,
+      "y": 410
+    },
+    "house": {
+      "name": "Башня Высоцкого",
+      "year": 2024,
+      "numberOfFlatsOnFloor": 3
+    }
+  }
+]
+

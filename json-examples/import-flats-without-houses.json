@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Пентхаус 501",
+    "floor": 5,
+    "area": 120,
+    "price": 15000000,
+    "balcony": true,
+    "timeToMetroOnFoot": 20,
+    "numberOfRooms": 4,
+    "livingSpace": 85,
+    "furnish": "DESIGNER",
+    "view": "GOOD",
+    "coordinates": {
+      "x": 150.5,
+      "y": 300
+    }
+  },
+  {
+    "name": "Эконом 306",
+    "floor": 3,
+    "area": 35,
+    "price": 2800000,
+    "balcony": false,
+    "timeToMetroOnFoot": 12,
+    "numberOfRooms": 1,
+    "livingSpace": 22,
+    "furnish": "BAD",
+    "view": "YARD",
+    "coordinates": {
+      "x": 155.0,
+      "y": 305
+    }
+  }
+]
+

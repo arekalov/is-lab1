@@ -12,6 +12,7 @@
         <class>com.arekalov.islab1.entity.Flat</class>
         <class>com.arekalov.islab1.entity.House</class>
         <class>com.arekalov.islab1.entity.Coordinates</class>
+        <class>com.arekalov.islab1.entity.ImportHistory</class>
         
         <properties>
             <!-- EclipseLink specific properties -->
@@ -19,9 +20,9 @@
             <property name="eclipselink.logging.level" value="FINE"/>
             <property name="eclipselink.logging.parameters" value="true"/>
             
-            <!-- DDL Generation - автоматическое создание/обновление схемы БД -->
-            <property name="eclipselink.ddl-generation" value="create-or-extend-tables"/>
-            <property name="eclipselink.ddl-generation.output-mode" value="database"/>
+            <!-- DDL Generation - отключено, используем ручные миграции -->
+            <property name="eclipselink.ddl-generation" value="none"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="none"/>
             
             <!-- Transaction settings -->
             <property name="eclipselink.jdbc.native-sql" value="true"/>

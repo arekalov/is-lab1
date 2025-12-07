@@ -2,6 +2,7 @@ package com.arekalov.islab1.config;
 
 import com.arekalov.islab1.controller.FlatController;
 import com.arekalov.islab1.controller.HouseController;
+import com.arekalov.islab1.controller.ImportController;
 import com.arekalov.islab1.exception.JsonParsingExceptionMapper;
 import com.arekalov.islab1.exception.ValidationExceptionMapper;
 import jakarta.ws.rs.ApplicationPath;
@@ -20,6 +21,7 @@ public class RestApplication extends Application {
             // Контроллеры
             FlatController.class,
             HouseController.class,
+            ImportController.class,
             
             // Конфигурация
             JacksonConfig.class,

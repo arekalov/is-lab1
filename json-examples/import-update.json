@@ -1,0 +1,28 @@
+[
+  {
+    "type": "FLAT",
+    "data": {
+      "id": 1,
+      "name": "Обновленная квартира 101",
+      "floor": 2,
+      "area": 55,
+      "price": 5500000,
+      "balcony": true,
+      "timeToMetroOnFoot": 10,
+      "numberOfRooms": 2,
+      "livingSpace": 38,
+      "furnish": "DESIGNER",
+      "view": "GOOD"
+    }
+  },
+  {
+    "type": "HOUSE",
+    "data": {
+      "id": 1,
+      "name": "Обновленное название дома",
+      "year": 2024,
+      "numberOfFlatsOnFloor": 5
+    }
+  }
+]
+

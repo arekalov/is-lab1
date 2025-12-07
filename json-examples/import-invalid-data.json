@@ -1,0 +1,28 @@
+[
+  {
+    "type": "FLAT",
+    "operation": "CREATE",
+    "data": {
+      "name": "Квартира с некорректными данными",
+      "floor": 1,
+      "area": 50,
+      "price": 5000000,
+      "balcony": true,
+      "timeToMetroOnFoot": 10,
+      "numberOfRooms": 2,
+      "livingSpace": 35,
+      "furnish": "DESIGNER",
+      "view": "YARD",
+      "coordinates": {
+        "x": 100,
+        "y": 200
+      },
+      "house": {
+        "name": "Дом с некорректным годом",
+        "year": -2023,
+        "numberOfFlatsOnFloor": 4
+      }
+    }
+  }
+]
+

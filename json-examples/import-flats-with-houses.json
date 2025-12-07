@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Квартира 101",
+    "floor": 1,
+    "area": 50,
+    "price": 5000000,
+    "balcony": true,
+    "timeToMetroOnFoot": 10,
+    "numberOfRooms": 2,
+    "livingSpace": 35,
+    "furnish": "DESIGNER",
+    "view": "YARD",
+    "coordinates": {
+      "x": 100.5,
+      "y": 200
+    },
+    "house": {
+      "name": "Новый дом на Пушкина",
+      "year": 2023,
+      "numberOfFlatsOnFloor": 4
+    }
+  },
+  {
+    "name": "Квартира 102",
+    "floor": 1,
+    "area": 65,
+    "price": 7500000,
+    "balcony": false,
+    "timeToMetroOnFoot": 15,
+    "numberOfRooms": 3,
+    "livingSpace": 45,
+    "furnish": "FINE",
+    "view": "STREET",
+    "coordinates": {
+      "x": 105.3,
+      "y": 202
+    },
+    "house": {
+      "name": "ЖК Солнечный",
+      "year": 2022,
+      "numberOfFlatsOnFloor": 6
+    }
+  },
+  {
+    "name": "Студия 203",
+    "floor": 2,
+    "area": 28,
+    "price": 3200000,
+    "balcony": true,
+    "timeToMetroOnFoot": 5,
+    "numberOfRooms": 1,
+    "livingSpace": 18,
+    "furnish": "LITTLE",
+    "view": "GOOD",
+    "coordinates": {
+      "x": 110.0,
+      "y": 205
+    },
+    "house": {
+      "name": "Бизнес-центр Невский",
+      "year": 2024,
+      "numberOfFlatsOnFloor": 8
+    }
+  }
+]
+

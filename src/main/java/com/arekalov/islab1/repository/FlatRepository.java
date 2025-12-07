@@ -156,6 +156,33 @@ public class FlatRepository {
     }
     
     /**
+     * Сохранить координаты
+     */
+    public Coordinates saveCoordinates(Coordinates coordinates) {
+        logger.info("FlatRepository.saveCoordinates() - сохранение координат");
+        
+        try {
+            EntityManager em = getEntityManager();
+            
+            if (coordinates.getId() == null) {
+                // Новые координаты - persist
+                em.persist(coordinates);
+                logger.info("FlatRepository.saveCoordinates() - координаты созданы с id=" + coordinates.getId());
+            } else {
+                // Существующие координаты - merge
+                coordinates = em.merge(coordinates);
+                logger.info("FlatRepository.saveCoordinates() - координаты обновлены с id=" + coordinates.getId());
+            }
+            
+            return coordinates;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка сохранения координат: " + e.getMessage());
+            throw new RuntimeException("Error saving coordinates: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
      * Удалить квартиру по ID с транзакцией
      */
     @Transactional
