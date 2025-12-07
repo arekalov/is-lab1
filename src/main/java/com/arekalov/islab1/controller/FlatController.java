@@ -2,6 +2,7 @@ package com.arekalov.islab1.controller;
 
 import com.arekalov.islab1.dto.response.*;
 import com.arekalov.islab1.dto.request.CreateFlatRequest;
+import com.arekalov.islab1.dto.request.UpdateFlatRequest;
 import com.arekalov.islab1.dto.response.ErrorResponse;
 import com.arekalov.islab1.dto.response.PagedResponse;
 import com.arekalov.islab1.mapper.FlatMapper;
@@ -146,9 +147,9 @@ public class FlatController {
      */
     @PUT
     @Path("/{id}")
-    public Response updateFlat(@PathParam("id") Long id, @Valid CreateFlatRequest request) {
+    public Response updateFlat(@PathParam("id") Long id, @Valid UpdateFlatRequest request) {
         try {
-            com.arekalov.islab1.entity.Flat updatedFlat = convertFromRequest(request);
+            com.arekalov.islab1.entity.Flat updatedFlat = convertFromUpdateRequest(request);
             com.arekalov.islab1.entity.Flat result = flatService.updateFlat(id, updatedFlat);
             FlatResponseDTO flatDTO = convertToDTO(result);
             return Response.ok(flatDTO).build();
@@ -374,6 +375,40 @@ public class FlatController {
      * Конвертировать Request в Entity
      */
     private com.arekalov.islab1.entity.Flat convertFromRequest(CreateFlatRequest request) {
+        com.arekalov.islab1.entity.Flat flat = new com.arekalov.islab1.entity.Flat();
+        flat.setName(request.getName());
+        flat.setArea(request.getArea());
+        flat.setPrice(request.getPrice());
+        flat.setBalcony(request.getBalcony());
+        flat.setTimeToMetroOnFoot(request.getTimeToMetroOnFoot());
+        flat.setNumberOfRooms(request.getNumberOfRooms());
+        flat.setLivingSpace(request.getLivingSpace());
+        flat.setFurnish(request.getFurnish());
+        flat.setView(request.getView());
+        flat.setFloor(request.getFloor());
+        
+        // Конвертируем координаты
+        if (request.getCoordinates() != null) {
+            com.arekalov.islab1.entity.Coordinates coords = new com.arekalov.islab1.entity.Coordinates();
+            coords.setX(request.getCoordinates().getX());
+            coords.setY(request.getCoordinates().getY());
+            flat.setCoordinates(coords);
+        }
+        
+        // Конвертируем дом (если указан ID)
+        if (request.getHouseId() != null) {
+            com.arekalov.islab1.entity.House house = new com.arekalov.islab1.entity.House();
+            house.setId(request.getHouseId());
+            flat.setHouse(house);
+        }
+        
+        return flat;
+    }
+    
+    /**
+     * Конвертировать UpdateRequest в Entity
+     */
+    private com.arekalov.islab1.entity.Flat convertFromUpdateRequest(UpdateFlatRequest request) {
         com.arekalov.islab1.entity.Flat flat = new com.arekalov.islab1.entity.Flat();
         flat.setName(request.getName());
         flat.setArea(request.getArea());

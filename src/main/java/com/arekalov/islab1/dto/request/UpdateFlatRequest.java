@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Request DTO для обновления квартиры
+ * Все поля обязательны, так как это полное обновление объекта (PUT)
  */
 @Data
 @NoArgsConstructor
@@ -52,7 +53,8 @@ public class UpdateFlatRequest {
     @NotNull(message = "Вид из окна не может быть null")
     private View view;
     
-    @NotNull(message = "Этаж не может быть null")
+    // Этаж сделан необязательным для совместимости с фронтендом
+    // Если не передан, будет использован этаж из существующей квартиры
     @Positive(message = "Этаж должен быть больше 0")
     private Integer floor;
     

@@ -2,6 +2,8 @@ package com.arekalov.islab1.service;
 
 import com.arekalov.islab1.entity.Flat;
 import com.arekalov.islab1.entity.House;
+import com.arekalov.islab1.entity.View;
+import com.arekalov.islab1.exception.UniqueConstraintViolationException;
 import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,7 +13,6 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
-import com.arekalov.islab1.dto.response.FlatResponseDTO;
 
 /**
  * Сервис для работы с квартирами с поддержкой JPA транзакций
@@ -124,6 +125,10 @@ public class FlatService {
                 logger.info("FlatNativeService.createFlat() - привязка к дому: " + house.getName());
             }
             
+            // Проверка ограничений уникальности
+            validateTerribleViewConstraint(flat);
+            validateCoordinatesAndFloorUniqueness(flat);
+            
             // Сохраняем квартиру
             Flat savedFlat = flatRepository.save(flat);
             
@@ -155,7 +160,13 @@ public class FlatService {
                 throw new RuntimeException("Квартира с ID " + id + " не найдена");
             }
             
-            // Валидация
+            // ВАЖНО: Устанавливаем значения по умолчанию из существующей квартиры
+            // для полей, которые могут быть не переданы при обновлении
+            if (updatedFlat.getFloor() == null) {
+                updatedFlat.setFloor(existingFlat.getFloor());
+            }
+            
+            // Валидация с учетом заполненных полей
             validateFlat(updatedFlat);
             
             // Обновляем поля
@@ -168,6 +179,7 @@ public class FlatService {
             existingFlat.setLivingSpace(updatedFlat.getLivingSpace());
             existingFlat.setFurnish(updatedFlat.getFurnish());
             existingFlat.setView(updatedFlat.getView());
+            existingFlat.setFloor(updatedFlat.getFloor()); // Теперь floor точно не null
             
             // Обновляем координаты
             if (updatedFlat.getCoordinates() != null) {
@@ -187,8 +199,17 @@ public class FlatService {
                 }
                 existingFlat.setHouse(house);
                 logger.info("FlatNativeService.updateFlat() - обновлена привязка к дому: " + house.getName());
-            } else {
+            } else if (updatedFlat.getHouse() == null) {
+                // Явно передан null - удаляем привязку к дому
                 existingFlat.setHouse(null);
+            }
+            // Если updatedFlat.getHouse().getId() == null, оставляем существующий дом
+            
+            // Проверка ограничений уникальности
+            // Важно: проверяем только если есть дом, иначе проверки не применимы
+            if (existingFlat.getHouse() != null) {
+                validateTerribleViewConstraint(existingFlat);
+                validateCoordinatesAndFloorUniqueness(existingFlat);
             }
             
             // Сохраняем изменения
@@ -280,6 +301,103 @@ public class FlatService {
         }
         
         logger.info("FlatNativeService.validateFlat() - валидация прошла успешно");
+    }
+    
+    /**
+     * Проверка ограничения: не больше половины квартир на этаже могут иметь вид TERRIBLE
+     */
+    public void validateTerribleViewConstraint(Flat flat) {
+        // Если у квартиры нет дома или вид не TERRIBLE, проверка не нужна
+        if (flat.getHouse() == null || flat.getView() != View.TERRIBLE) {
+            return;
+        }
+        
+        Long houseId = flat.getHouse().getId();
+        Integer floor = flat.getFloor();
+        Integer numberOfFlatsOnFloor = flat.getHouse().getNumberOfFlatsOnFloor();
+        
+        if (houseId == null || floor == null || numberOfFlatsOnFloor == null) {
+            return;
+        }
+        
+        logger.info(String.format(
+            "Проверка ограничения TERRIBLE для квартиры: house_id=%d, floor=%d, flats_per_floor=%d",
+            houseId, floor, numberOfFlatsOnFloor
+        ));
+        
+        // Используем репозиторий для подсчета
+        Long terribleCount = flatRepository.countByHouseAndFloorAndView(houseId, floor, View.TERRIBLE, flat.getId());
+        
+        // Если добавляем/обновляем квартиру с TERRIBLE, увеличиваем счетчик
+        long newTerribleCount = terribleCount + 1;
+        
+        // Максимально допустимое количество квартир с TERRIBLE (половина от всех квартир на этаже)
+        double maxTerribleAllowed = numberOfFlatsOnFloor / 2.0;
+        
+        logger.info(String.format(
+            "Текущее количество TERRIBLE: %d, после добавления: %d, максимум: %.1f",
+            terribleCount, newTerribleCount, maxTerribleAllowed
+        ));
+        
+        if (newTerribleCount > maxTerribleAllowed) {
+            String message = String.format(
+                "Нарушено ограничение уникальности: на этаже %d дома (ID=%d) не может быть больше %.0f квартир с видом TERRIBLE. " +
+                "Сейчас: %d, попытка добавить еще одну.",
+                floor, houseId, maxTerribleAllowed, terribleCount
+            );
+            throw new UniqueConstraintViolationException(message);
+        }
+        
+        logger.info("Проверка ограничения TERRIBLE пройдена успешно");
+    }
+    
+    /**
+     * Проверка уникальности: не может быть больше numberOfFlatsOnFloor квартир 
+     * с одинаковыми координатами и этажом
+     */
+    public void validateCoordinatesAndFloorUniqueness(Flat flat) {
+        if (flat.getCoordinates() == null || flat.getFloor() == null) {
+            return;
+        }
+        
+        // Для проверки нужен дом с numberOfFlatsOnFloor
+        if (flat.getHouse() == null || flat.getHouse().getNumberOfFlatsOnFloor() == null) {
+            return;
+        }
+        
+        Integer x = flat.getCoordinates().getX();
+        Integer y = flat.getCoordinates().getY();
+        Integer floor = flat.getFloor();
+        Integer numberOfFlatsOnFloor = flat.getHouse().getNumberOfFlatsOnFloor();
+        
+        if (x == null || y == null) {
+            return;
+        }
+        
+        logger.info(String.format(
+            "Проверка уникальности координат+этаж для квартиры: x=%d, y=%d, floor=%d, max=%d",
+            x, y, floor, numberOfFlatsOnFloor
+        ));
+        
+        // Используем репозиторий для подсчета
+        Long currentCount = flatRepository.countByCoordinatesAndFloor(x, y, floor, flat.getId());
+        long newCount = currentCount + 1; // После добавления/обновления
+        
+        logger.info(String.format(
+            "Текущее количество квартир с координатами (%d, %d) на этаже %d: %d, после добавления: %d, максимум: %d",
+            x, y, floor, currentCount, newCount, numberOfFlatsOnFloor
+        ));
+        
+        if (newCount > numberOfFlatsOnFloor) {
+            String message = String.format(
+                "Нарушено ограничение уникальности: на координатах (%d, %d) и этаже %d уже существует %d квартир(ы). " +
+                "Максимум для этого дома: %d квартир на этаже.",
+                x, y, floor, currentCount, numberOfFlatsOnFloor
+            );
+            throw new UniqueConstraintViolationException(message);
+        }
+        
+        logger.info("Проверка уникальности координат+этаж пройдена успешно");
     }
     
     /**

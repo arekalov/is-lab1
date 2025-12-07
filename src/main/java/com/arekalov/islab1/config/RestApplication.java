@@ -5,6 +5,7 @@ import com.arekalov.islab1.controller.HouseController;
 import com.arekalov.islab1.controller.ImportController;
 import com.arekalov.islab1.exception.JsonParsingExceptionMapper;
 import com.arekalov.islab1.exception.ValidationExceptionMapper;
+import com.arekalov.islab1.exception.UniqueConstraintViolationExceptionMapper;
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
 import java.util.Set;
@@ -28,7 +29,8 @@ public class RestApplication extends Application {
             
             // Обработчики ошибок
             JsonParsingExceptionMapper.class,
-            ValidationExceptionMapper.class
+            ValidationExceptionMapper.class,
+            UniqueConstraintViolationExceptionMapper.class
         );
     }
 }

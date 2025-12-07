@@ -3,6 +3,7 @@ package com.arekalov.islab1.repository;
 import com.arekalov.islab1.entity.Flat;
 import com.arekalov.islab1.entity.Coordinates;
 import com.arekalov.islab1.entity.House;
+import com.arekalov.islab1.entity.View;
 import com.arekalov.islab1.service.EntityManagerService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -354,6 +355,80 @@ public class FlatRepository {
         } catch (Exception e) {
             logger.severe("Ошибка поиска квартир, отсортированных по времени до метро: " + e.getMessage());
             throw new RuntimeException("Error finding flats sorted by metro time: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Подсчитать количество квартир с заданным видом на определенном этаже дома
+     * (исключая конкретную квартиру, если указан её ID)
+     */
+    public Long countByHouseAndFloorAndView(Long houseId, Integer floor, View view, Long excludeFlatId) {
+        logger.info(String.format(
+            "FlatRepository.countByHouseAndFloorAndView() - подсчет квартир: house=%d, floor=%d, view=%s, exclude=%s",
+            houseId, floor, view, excludeFlatId
+        ));
+        
+        try {
+            EntityManager em = getEntityManager();
+            
+            String jpql = "SELECT COUNT(f) FROM Flat f WHERE f.house.id = :houseId AND f.floor = :floor AND f.view = :view";
+            if (excludeFlatId != null) {
+                jpql += " AND f.id != :flatId";
+            }
+            
+            TypedQuery<Long> query = em.createQuery(jpql, Long.class);
+            query.setParameter("houseId", houseId);
+            query.setParameter("floor", floor);
+            query.setParameter("view", view);
+            
+            if (excludeFlatId != null) {
+                query.setParameter("flatId", excludeFlatId);
+            }
+            
+            Long count = query.getSingleResult();
+            logger.info("FlatRepository.countByHouseAndFloorAndView() - найдено: " + count);
+            return count;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка подсчета квартир: " + e.getMessage());
+            throw new RuntimeException("Error counting flats: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Подсчитать количество квартир с заданными координатами и этажом
+     * (исключая конкретную квартиру, если указан её ID)
+     */
+    public Long countByCoordinatesAndFloor(Integer x, Integer y, Integer floor, Long excludeFlatId) {
+        logger.info(String.format(
+            "FlatRepository.countByCoordinatesAndFloor() - подсчет квартир: x=%d, y=%d, floor=%d, exclude=%s",
+            x, y, floor, excludeFlatId
+        ));
+        
+        try {
+            EntityManager em = getEntityManager();
+            
+            String jpql = "SELECT COUNT(f) FROM Flat f WHERE f.coordinates.x = :x AND f.coordinates.y = :y AND f.floor = :floor";
+            if (excludeFlatId != null) {
+                jpql += " AND f.id != :flatId";
+            }
+            
+            TypedQuery<Long> query = em.createQuery(jpql, Long.class);
+            query.setParameter("x", x);
+            query.setParameter("y", y);
+            query.setParameter("floor", floor);
+            
+            if (excludeFlatId != null) {
+                query.setParameter("flatId", excludeFlatId);
+            }
+            
+            Long count = query.getSingleResult();
+            logger.info("FlatRepository.countByCoordinatesAndFloor() - найдено: " + count);
+            return count;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка подсчета квартир по координатам: " + e.getMessage());
+            throw new RuntimeException("Error counting flats by coordinates: " + e.getMessage(), e);
         }
     }
 }

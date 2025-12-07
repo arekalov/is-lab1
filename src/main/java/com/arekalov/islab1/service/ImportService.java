@@ -51,6 +51,9 @@ public class ImportService {
     @Inject
     private WebSocketService webSocketService;
     
+    @Inject
+    private FlatService flatService;
+    
     /**
      * Универсальный импорт объектов
      * Принимает массив операций с разными типами объектов
@@ -283,6 +286,11 @@ public class ImportService {
         flat.setId(null); // Гарантируем создание новой записи
         
         validateEntity(flat, "Квартира");
+        
+        // Проверка ограничений уникальности через FlatService
+        flatService.validateTerribleViewConstraint(flat);
+        flatService.validateCoordinatesAndFloorUniqueness(flat);
+        
         flat = flatRepository.save(flat);
         
         webSocketService.notifyFlatUpdate("CREATE", flat);
@@ -351,6 +359,11 @@ public class ImportService {
         }
         
         validateEntity(updatedFlat, "Квартира");
+        
+        // Проверка ограничений уникальности через FlatService
+        flatService.validateTerribleViewConstraint(updatedFlat);
+        flatService.validateCoordinatesAndFloorUniqueness(updatedFlat);
+        
         updatedFlat = flatRepository.save(updatedFlat);
         
         webSocketService.notifyFlatUpdate("UPDATE", updatedFlat);
