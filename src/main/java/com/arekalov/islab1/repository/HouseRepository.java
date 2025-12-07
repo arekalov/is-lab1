@@ -42,10 +42,12 @@ public class HouseRepository {
             if (house.getId() == null) {
                 // Новый дом - persist
                 em.persist(house);
+                em.flush(); // Форсируем INSERT чтобы получить ID
                 logger.info("HouseRepository.save() - дом создан с id=" + house.getId());
             } else {
                 // Существующий дом - merge
                 house = em.merge(house);
+                em.flush(); // Форсируем UPDATE
                 logger.info("HouseRepository.save() - дом обновлен с id=" + house.getId());
             }
             

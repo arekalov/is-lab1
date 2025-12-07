@@ -141,10 +141,12 @@ public class FlatRepository {
             if (flat.getId() == null) {
                 // Новая квартира - persist
                 em.persist(flat);
+                em.flush(); // Форсируем INSERT чтобы получить ID
                 logger.info("FlatRepository.save() - квартира создана с id=" + flat.getId());
             } else {
                 // Существующая квартира - merge
                 flat = em.merge(flat);
+                em.flush(); // Форсируем UPDATE
                 logger.info("FlatRepository.save() - квартира обновлена с id=" + flat.getId());
             }
             
@@ -168,10 +170,12 @@ public class FlatRepository {
             if (coordinates.getId() == null) {
                 // Новые координаты - persist
                 em.persist(coordinates);
+                em.flush(); // Форсируем INSERT чтобы получить ID
                 logger.info("FlatRepository.saveCoordinates() - координаты созданы с id=" + coordinates.getId());
             } else {
                 // Существующие координаты - merge
                 coordinates = em.merge(coordinates);
+                em.flush(); // Форсируем UPDATE
                 logger.info("FlatRepository.saveCoordinates() - координаты обновлены с id=" + coordinates.getId());
             }
             
