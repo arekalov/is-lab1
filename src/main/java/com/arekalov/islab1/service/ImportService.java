@@ -78,7 +78,7 @@ public class ImportService {
             
             logger.info("ImportService.importObjects() - найдено " + operations.size() + " операций");
             
-            // Счетчик успешно выполненных операций
+            // Счетчик успешно созданных/измененных/удаленных объектов (включая вложенные)
             int successCount = 0;
             
             // Обрабатываем каждую операцию
@@ -101,20 +101,22 @@ public class ImportService {
                 logger.info("ImportService.importObjects() - выполняется: " + type + " " + op);
                 
                 // Выполняем операцию в зависимости от типа
+                // Методы возвращают количество затронутых объектов (включая вложенные)
+                int affectedObjects = 0;
                 switch (type) {
                     case "FLAT":
-                        processFlatOperation(op, dataNode);
+                        affectedObjects = processFlatOperation(op, dataNode);
                         break;
                     case "HOUSE":
-                        processHouseOperation(op, dataNode);
+                        affectedObjects = processHouseOperation(op, dataNode);
                         break;
                     case "COORDINATES":
-                        processCoordinatesOperation(op, dataNode);
+                        affectedObjects = processCoordinatesOperation(op, dataNode);
                         break;
                     default:
                         throw new IllegalArgumentException("Неизвестный тип объекта: " + type);
                 }
-                successCount++;
+                successCount += affectedObjects;
             }
             
             // Форматируем JSON для сохранения (удаляем поля с null id и форматируем)
@@ -215,18 +217,16 @@ public class ImportService {
     
     /**
      * Обработка операции с квартирой
+     * @return количество затронутых объектов (включая вложенные House/Coordinates)
      */
-    private void processFlatOperation(String operation, JsonNode dataNode) throws Exception {
+    private int processFlatOperation(String operation, JsonNode dataNode) throws Exception {
         switch (operation) {
             case "CREATE":
-                createFlat(dataNode);
-                break;
+                return createFlat(dataNode);
             case "UPDATE":
-                updateFlat(dataNode);
-                break;
+                return updateFlat(dataNode);
             case "DELETE":
-                deleteFlat(dataNode);
-                break;
+                return deleteFlat(dataNode);
             default:
                 throw new IllegalArgumentException("Неизвестная операция: " + operation);
         }
@@ -234,8 +234,11 @@ public class ImportService {
     
     /**
      * Создать квартиру
+     * @return количество созданных объектов (Flat + House + Coordinates если созданы)
      */
-    private void createFlat(JsonNode dataNode) throws Exception {
+    private int createFlat(JsonNode dataNode) throws Exception {
+        int createdObjects = 0;
+        
         // Обрабатываем вложенные координаты (обязательные)
         Coordinates coordinates = null;
         if (dataNode.has("coordinates")) {
@@ -243,6 +246,7 @@ public class ImportService {
             coordinates = objectMapper.treeToValue(coordsNode, Coordinates.class);
             validateEntity(coordinates, "Координаты");
             coordinates = flatRepository.saveCoordinates(coordinates);
+            createdObjects++; // +1 за Coordinates
         } else {
             throw new IllegalArgumentException("Квартира должна иметь координаты");
         }
@@ -261,11 +265,13 @@ public class ImportService {
                     throw new IllegalArgumentException("Дом с id=" + houseId + " не найден");
                 }
                 logger.info("Используется существующий дом: id=" + houseId);
+                // НЕ увеличиваем счетчик - дом уже существовал
             } else {
                 // Передан объект для создания нового дома
                 house = objectMapper.treeToValue(houseNode, House.class);
                 validateEntity(house, "Дом");
                 house = houseRepository.save(house);
+                createdObjects++; // +1 за House
                 logger.info("Создан новый дом: id=" + house.getId());
             }
         }
@@ -292,15 +298,20 @@ public class ImportService {
         flatService.validateCoordinatesAndFloorUniqueness(flat);
         
         flat = flatRepository.save(flat);
+        createdObjects++; // +1 за Flat
         
         webSocketService.notifyFlatUpdate("CREATE", flat);
-        logger.info("Создана квартира: id=" + flat.getId() + ", name=" + flat.getName());
+        logger.info(String.format("Создана квартира: id=%d, name=%s (всего создано объектов: %d)", 
+            flat.getId(), flat.getName(), createdObjects));
+        
+        return createdObjects;
     }
     
     /**
      * Обновить квартиру
+     * @return количество измененных объектов (всегда 1, так как обновляется только Flat)
      */
-    private void updateFlat(JsonNode dataNode) throws Exception {
+    private int updateFlat(JsonNode dataNode) throws Exception {
         Long id = dataNode.get("id").asLong();
         Flat existingFlat = flatRepository.findById(id);
         
@@ -368,12 +379,15 @@ public class ImportService {
         
         webSocketService.notifyFlatUpdate("UPDATE", updatedFlat);
         logger.info("Обновлена квартира: id=" + id);
+        
+        return 1; // Обновлен 1 объект (Flat)
     }
     
     /**
      * Удалить квартиру
+     * @return количество удаленных объектов (всегда 1)
      */
-    private void deleteFlat(JsonNode dataNode) {
+    private int deleteFlat(JsonNode dataNode) {
         Long id = dataNode.get("id").asLong();
         Flat flat = flatRepository.findById(id);
         
@@ -384,12 +398,15 @@ public class ImportService {
         flatRepository.deleteById(id);
         webSocketService.notifyFlatUpdate("DELETE", flat);
         logger.info("Удалена квартира: id=" + id);
+        
+        return 1; // Удален 1 объект (Flat)
     }
     
     /**
      * Обработка операции с домом
+     * @return количество затронутых объектов (всегда 1 для House)
      */
-    private void processHouseOperation(String operation, JsonNode dataNode) throws Exception {
+    private int processHouseOperation(String operation, JsonNode dataNode) throws Exception {
         switch (operation) {
             case "CREATE":
                 House house = objectMapper.treeToValue(dataNode, House.class);
@@ -397,7 +414,7 @@ public class ImportService {
                 validateEntity(house, "Дом");
                 house = houseRepository.save(house);
                 logger.info("Создан дом: id=" + house.getId());
-                break;
+                return 1; // Создан 1 объект
                 
             case "UPDATE":
                 Long houseId = dataNode.get("id").asLong();
@@ -410,7 +427,7 @@ public class ImportService {
                 validateEntity(house, "Дом");
                 house = houseRepository.save(house);
                 logger.info("Обновлен дом: id=" + houseId);
-                break;
+                return 1; // Обновлен 1 объект
                 
             case "DELETE":
                 houseId = dataNode.get("id").asLong();
@@ -420,7 +437,7 @@ public class ImportService {
                 }
                 houseRepository.deleteById(houseId);
                 logger.info("Удален дом: id=" + houseId);
-                break;
+                return 1; // Удален 1 объект
                 
             default:
                 throw new IllegalArgumentException("Неизвестная операция: " + operation);
@@ -429,8 +446,9 @@ public class ImportService {
     
     /**
      * Обработка операции с координатами
+     * @return количество затронутых объектов (всегда 1 для Coordinates)
      */
-    private void processCoordinatesOperation(String operation, JsonNode dataNode) throws Exception {
+    private int processCoordinatesOperation(String operation, JsonNode dataNode) throws Exception {
         switch (operation) {
             case "CREATE":
                 Coordinates coords = objectMapper.treeToValue(dataNode, Coordinates.class);
@@ -438,7 +456,7 @@ public class ImportService {
                 validateEntity(coords, "Координаты");
                 coords = flatRepository.saveCoordinates(coords);
                 logger.info("Созданы координаты: id=" + coords.getId());
-                break;
+                return 1; // Создан 1 объект
                 
             case "UPDATE":
                 Long coordsId = dataNode.get("id").asLong();
@@ -447,7 +465,7 @@ public class ImportService {
                 validateEntity(coords, "Координаты");
                 coords = flatRepository.saveCoordinates(coords);
                 logger.info("Обновлены координаты: id=" + coordsId);
-                break;
+                return 1; // Обновлен 1 объект
                 
             case "DELETE":
                 throw new UnsupportedOperationException("Удаление координат не поддерживается (используются квартирами)");
