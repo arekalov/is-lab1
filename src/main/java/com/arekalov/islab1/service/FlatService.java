@@ -304,56 +304,67 @@ public class FlatService {
     }
     
     /**
-     * Проверка ограничения: не больше половины квартир на этаже могут иметь вид TERRIBLE
+     * Проверка ограничения: не больше половины квартир на этаже могут иметь вид BAD (некрасивый)
+     * ВАЖНО: Использует пессимистическую блокировку дома для предотвращения race conditions
      */
     public void validateTerribleViewConstraint(Flat flat) {
-        // Если у квартиры нет дома или вид не TERRIBLE, проверка не нужна
-        if (flat.getHouse() == null || flat.getView() != View.TERRIBLE) {
+        // Если у квартиры нет дома или вид не BAD, проверка не нужна
+        if (flat.getHouse() == null || flat.getView() != View.BAD) {
             return;
         }
         
         Long houseId = flat.getHouse().getId();
         Integer floor = flat.getFloor();
-        Integer numberOfFlatsOnFloor = flat.getHouse().getNumberOfFlatsOnFloor();
         
-        if (houseId == null || floor == null || numberOfFlatsOnFloor == null) {
+        if (houseId == null || floor == null) {
             return;
         }
         
+        // ⚠️ КЛЮЧЕВОЙ МОМЕНТ: Блокируем дом для предотвращения race conditions
+        // Пока блокировка удерживается, другие потоки не смогут проверять/добавлять квартиры
+        House house = houseRepository.findByIdWithLock(houseId);
+        
+        if (house == null || house.getNumberOfFlatsOnFloor() == null) {
+            return;
+        }
+        
+        Integer numberOfFlatsOnFloor = house.getNumberOfFlatsOnFloor();
+        
         logger.info(String.format(
-            "Проверка ограничения TERRIBLE для квартиры: house_id=%d, floor=%d, flats_per_floor=%d",
+            "Проверка ограничения BAD (некрасивый вид) для квартиры: house_id=%d, floor=%d, flats_per_floor=%d [LOCKED]",
             houseId, floor, numberOfFlatsOnFloor
         ));
         
         // Используем репозиторий для подсчета
-        Long terribleCount = flatRepository.countByHouseAndFloorAndView(houseId, floor, View.TERRIBLE, flat.getId());
+        Long badCount = flatRepository.countByHouseAndFloorAndView(houseId, floor, View.BAD, flat.getId());
         
-        // Если добавляем/обновляем квартиру с TERRIBLE, увеличиваем счетчик
-        long newTerribleCount = terribleCount + 1;
+        // Если добавляем/обновляем квартиру с BAD, увеличиваем счетчик
+        long newBadCount = badCount + 1;
         
-        // Максимально допустимое количество квартир с TERRIBLE (половина от всех квартир на этаже)
-        double maxTerribleAllowed = numberOfFlatsOnFloor / 2.0;
+        // Максимально допустимое количество квартир с BAD (половина от всех квартир на этаже)
+        double maxBadAllowed = numberOfFlatsOnFloor / 2.0;
         
         logger.info(String.format(
-            "Текущее количество TERRIBLE: %d, после добавления: %d, максимум: %.1f",
-            terribleCount, newTerribleCount, maxTerribleAllowed
+            "Текущее количество BAD: %d, после добавления: %d, максимум: %.1f",
+            badCount, newBadCount, maxBadAllowed
         ));
         
-        if (newTerribleCount > maxTerribleAllowed) {
+        if (newBadCount > maxBadAllowed) {
             String message = String.format(
-                "Нарушено ограничение уникальности: на этаже %d дома (ID=%d) не может быть больше %.0f квартир с видом TERRIBLE. " +
+                "Нарушено ограничение уникальности: на этаже %d дома (ID=%d) не может быть больше %.0f квартир с некрасивым видом (BAD). " +
                 "Сейчас: %d, попытка добавить еще одну.",
-                floor, houseId, maxTerribleAllowed, terribleCount
+                floor, houseId, maxBadAllowed, badCount
             );
             throw new UniqueConstraintViolationException(message);
         }
         
-        logger.info("Проверка ограничения TERRIBLE пройдена успешно");
+        logger.info("Проверка ограничения BAD пройдена успешно [LOCK WILL BE RELEASED]");
     }
     
     /**
      * Проверка уникальности: не может быть больше numberOfFlatsOnFloor квартир 
      * с одинаковыми координатами и этажом
+     * ВАЖНО: Использует пессимистическую блокировку дома для предотвращения race conditions
      */
     public void validateCoordinatesAndFloorUniqueness(Flat flat) {
         if (flat.getCoordinates() == null || flat.getFloor() == null) {
@@ -361,21 +372,34 @@ public class FlatService {
         }
         
         // Для проверки нужен дом с numberOfFlatsOnFloor
-        if (flat.getHouse() == null || flat.getHouse().getNumberOfFlatsOnFloor() == null) {
+        if (flat.getHouse() == null) {
+            return;
+        }
+        
+        Long houseId = flat.getHouse().getId();
+        Integer floor = flat.getFloor();
+        
+        if (houseId == null) {
+            return;
+        }
+        
+        // ⚠️ КЛЮЧЕВОЙ МОМЕНТ: Блокируем дом для предотвращения race conditions
+        House house = houseRepository.findByIdWithLock(houseId);
+        
+        if (house == null || house.getNumberOfFlatsOnFloor() == null) {
             return;
         }
         
         Integer x = flat.getCoordinates().getX();
         Integer y = flat.getCoordinates().getY();
-        Integer floor = flat.getFloor();
-        Integer numberOfFlatsOnFloor = flat.getHouse().getNumberOfFlatsOnFloor();
+        Integer numberOfFlatsOnFloor = house.getNumberOfFlatsOnFloor();
         
         if (x == null || y == null) {
             return;
         }
         
         logger.info(String.format(
-            "Проверка уникальности координат+этаж для квартиры: x=%d, y=%d, floor=%d, max=%d",
+            "Проверка уникальности координат+этаж для квартиры: x=%d, y=%d, floor=%d, max=%d [LOCKED]",
             x, y, floor, numberOfFlatsOnFloor
         ));
         
@@ -397,7 +421,7 @@ public class FlatService {
             throw new UniqueConstraintViolationException(message);
         }
         
-        logger.info("Проверка уникальности координат+этаж пройдена успешно");
+        logger.info("Проверка уникальности координат+этаж пройдена успешно [LOCK WILL BE RELEASED]");
     }
     
     /**

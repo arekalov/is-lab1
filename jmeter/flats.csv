@@ -1,0 +1,10 @@
+Обновленная квартира 1,100,200,75,5000000,true,15,3,60,FINE,GOOD,5,${__property(houseId2)}
+Обновленная квартира 2,150,250,85,6000000,false,20,4,70,LITTLE,BAD,7,${__property(houseId2)}
+Обновленная квартира 3,200,300,95,7000000,true,25,5,80,DESIGNER,TERRIBLE,9,${__property(houseId2)}
+Роскошная квартира,120,180,120,10000000,true,10,4,100,DESIGNER,YARD,12,${__property(houseId2)}
+Студия в центре,80,90,45,3500000,false,5,1,40,FINE,GOOD,3,${__property(houseId2)}
+Семейная квартира,180,220,110,8500000,true,30,5,90,FINE,BAD,6,${__property(houseId2)}
+Пентхаус,250,350,150,15000000,true,8,6,130,DESIGNER,YARD,20,${__property(houseId2)}
+Компактная квартира,90,110,50,4000000,false,12,2,45,LITTLE,TERRIBLE,4,${__property(houseId2)}
+Просторная квартира,220,280,130,9500000,true,18,5,110,FINE,GOOD,8,${__property(houseId2)}
+Современная квартира,160,190,80,6500000,true,22,3,65,DESIGNER,BAD,10,${__property(houseId2)}

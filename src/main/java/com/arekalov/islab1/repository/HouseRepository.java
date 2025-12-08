@@ -40,14 +40,24 @@ public class HouseRepository {
             EntityManager em = getEntityManager();
             
             if (house.getId() == null) {
-                // Новый дом - persist
+                // Новый дом - persist (блокировка не нужна)
                 em.persist(house);
                 em.flush(); // Форсируем INSERT чтобы получить ID
                 logger.info("HouseRepository.save() - дом создан с id=" + house.getId());
             } else {
-                // Существующий дом - merge
-                house = em.merge(house);
+                // Существующий дом - блокируем и обновляем
+                House existingHouse = em.find(House.class, house.getId(), jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+                if (existingHouse == null) {
+                    throw new RuntimeException("House not found with id: " + house.getId());
+                }
+                
+                // Обновляем поля
+                existingHouse.setName(house.getName());
+                existingHouse.setYear(house.getYear());
+                existingHouse.setNumberOfFlatsOnFloor(house.getNumberOfFlatsOnFloor());
+                
                 em.flush(); // Форсируем UPDATE
+                house = existingHouse;
                 logger.info("HouseRepository.save() - дом обновлен с id=" + house.getId());
             }
             
@@ -160,6 +170,32 @@ public class HouseRepository {
     }
     
     /**
+     * Найти дом с пессимистической блокировкой (для проверки ограничений)
+     * Это предотвращает race conditions при создании квартир в параллельных потоках
+     */
+    @Transactional
+    public House findByIdWithLock(Long id) {
+        logger.info("HouseRepository.findByIdWithLock() - поиск дома с блокировкой, id=" + id);
+        
+        try {
+            EntityManager em = getEntityManager();
+            House house = em.find(House.class, id, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+            
+            if (house != null) {
+                logger.info("HouseRepository.findByIdWithLock() - дом найден и заблокирован: " + house.getName());
+            } else {
+                logger.info("HouseRepository.findByIdWithLock() - дом с id=" + id + " не найден");
+            }
+            
+            return house;
+            
+        } catch (Exception e) {
+            logger.severe("Ошибка поиска дома с блокировкой: " + e.getMessage());
+            throw new RuntimeException("Error finding house with lock: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
      * Получить количество квартир в доме
      */
     public long getFlatsCount(Long houseId) {
@@ -217,7 +253,8 @@ public class HouseRepository {
         try {
             EntityManager em = getEntityManager();
             
-            House house = em.find(House.class, id);
+            // Блокируем строку в БД для предотвращения race condition
+            House house = em.find(House.class, id, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
             if (house == null) {
                 logger.info("HouseRepository.deleteById() - дом не найден для удаления");
                 return false;

@@ -139,14 +139,33 @@ public class FlatRepository {
             EntityManager em = getEntityManager();
             
             if (flat.getId() == null) {
-                // Новая квартира - persist
+                // Новая квартира - persist (блокировка не нужна)
                 em.persist(flat);
                 em.flush(); // Форсируем INSERT чтобы получить ID
                 logger.info("FlatRepository.save() - квартира создана с id=" + flat.getId());
             } else {
-                // Существующая квартира - merge
-                flat = em.merge(flat);
+                // Существующая квартира - блокируем и обновляем
+                Flat existingFlat = em.find(Flat.class, flat.getId(), jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+                if (existingFlat == null) {
+                    throw new RuntimeException("Flat not found with id: " + flat.getId());
+                }
+                
+                // Обновляем поля
+                existingFlat.setName(flat.getName());
+                existingFlat.setCoordinates(flat.getCoordinates());
+                existingFlat.setArea(flat.getArea());
+                existingFlat.setPrice(flat.getPrice());
+                existingFlat.setBalcony(flat.getBalcony());
+                existingFlat.setTimeToMetroOnFoot(flat.getTimeToMetroOnFoot());
+                existingFlat.setNumberOfRooms(flat.getNumberOfRooms());
+                existingFlat.setFurnish(flat.getFurnish());
+                existingFlat.setView(flat.getView());
+                existingFlat.setHouse(flat.getHouse());
+                existingFlat.setFloor(flat.getFloor());
+                existingFlat.setLivingSpace(flat.getLivingSpace());
+                
                 em.flush(); // Форсируем UPDATE
+                flat = existingFlat;
                 logger.info("FlatRepository.save() - квартира обновлена с id=" + flat.getId());
             }
             
@@ -197,7 +216,8 @@ public class FlatRepository {
         try {
             EntityManager em = getEntityManager();
             
-            Flat flat = em.find(Flat.class, id);
+            // Блокируем строку в БД для предотвращения race condition
+            Flat flat = em.find(Flat.class, id, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
             if (flat == null) {
                 logger.info("FlatRepository.deleteById() - квартира не найдена для удаления");
                 return false;
