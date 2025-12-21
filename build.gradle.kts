@@ -39,6 +39,10 @@ dependencies {
     
     // Bean Validation
     compileOnly("org.hibernate.validator:hibernate-validator:6.2.5.Final")
+
+    
+    // Ehcache L2 Cache
+    implementation("org.ehcache:ehcache:3.10.8")
     
     // Test dependencies
     testImplementation(platform("org.junit:junit-bom:5.10.0"))

@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
  * Координаты (Entity)
  */
 @Entity
+@Cacheable
 @Table(name = "coordinates")
 @Data
 @NoArgsConstructor

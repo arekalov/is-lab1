@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
  * Квартира (Entity)
  */
 @Entity
+@Cacheable
 @Table(name = "flats")
 @Data
 @NoArgsConstructor

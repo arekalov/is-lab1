@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
  * Дом (Entity)
  */
 @Entity
+@Cacheable
 @Table(name = "houses")
 @Data
 @NoArgsConstructor

@@ -28,21 +28,18 @@
             <property name="eclipselink.jdbc.native-sql" value="true"/>
             <property name="eclipselink.target-database" value="PostgreSQL"/>
             
-            <!-- Cache settings - disable for transactional consistency -->
-            <property name="eclipselink.cache.shared.default" value="false"/>
-            <property name="eclipselink.cache.type.default" value="NONE"/>
+            <!-- L2 Cache settings (только для @Cacheable entities) -->
+            <property name="eclipselink.cache.shared.default" value="true"/>
+            <property name="eclipselink.cache.type.default" value="FULL"/>
+            <property name="eclipselink.cache.size.default" value="1000"/>
+            <property name="jakarta.persistence.sharedCache.mode" value="ENABLE_SELECTIVE"/>
             
-            <!-- Connection pool настройки для работы с Neon.tech -->
-            <!-- Включаем проверку соединений перед использованием -->
+            <!-- Connection validation -->
             <property name="eclipselink.jdbc.validate-connections" value="true"/>
             
             <!-- Retry при connection failures -->
             <property name="eclipselink.query-retry-count" value="3"/>
             <property name="eclipselink.query-retry-delay" value="1000"/>
-            
-            <!-- Максимальное количество попыток reconnect -->
-            <property name="eclipselink.connection-pool.default.max" value="10"/>
-            <property name="eclipselink.connection-pool.default.min" value="2"/>
             
             <!-- Validation mode -->
             <property name="jakarta.persistence.validation.mode" value="AUTO"/>

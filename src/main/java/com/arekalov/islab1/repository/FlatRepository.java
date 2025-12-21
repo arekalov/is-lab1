@@ -4,6 +4,7 @@ import com.arekalov.islab1.entity.Flat;
 import com.arekalov.islab1.entity.Coordinates;
 import com.arekalov.islab1.entity.House;
 import com.arekalov.islab1.entity.View;
+import com.arekalov.islab1.interceptor.CacheStatistics;
 import com.arekalov.islab1.service.EntityManagerService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -35,6 +36,7 @@ public class FlatRepository {
     /**
      * Найти все квартиры с пагинацией
      */
+    @CacheStatistics
     public List<Flat> findAll(int page, int size, String sortBy) {
         logger.info("FlatRepository.findAll() - поиск квартир: page=" + page + ", size=" + size + ", sortBy=" + sortBy);
         
@@ -107,6 +109,7 @@ public class FlatRepository {
     /**
      * Найти квартиру по ID
      */
+    @CacheStatistics
     public Flat findById(Long id) {
         logger.info("FlatRepository.findById() - поиск квартиры с id=" + id);
         

@@ -1,6 +1,7 @@
 package com.arekalov.islab1.repository;
 
 import com.arekalov.islab1.entity.House;
+import com.arekalov.islab1.interceptor.CacheStatistics;
 import com.arekalov.islab1.service.EntityManagerService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -72,6 +73,7 @@ public class HouseRepository {
     /**
      * Найти все дома с пагинацией
      */
+    @CacheStatistics
     public List<House> findAll(int page, int size) {
         logger.info("HouseRepository.findAll() - поиск домов с пагинацией: page=" + page + ", size=" + size);
         
@@ -148,6 +150,7 @@ public class HouseRepository {
     /**
      * Найти дом по ID
      */
+    @CacheStatistics
     public House findById(Long id) {
         logger.info("HouseRepository.findById() - поиск дома с id=" + id);
         

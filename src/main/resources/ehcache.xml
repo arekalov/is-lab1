@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns='http://www.ehcache.org/v3'
+        xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd">
+    
+    <!-- 
+        L2 Cache конфигурация для EclipseLink
+        
+        Параметры и их влияние на уровень хранения:
+        
+        1. heap (entries) - количество объектов в памяти Java Heap
+           - Больше = меньше обращений к БД, но больше использование RAM
+           - Меньше = чаще обращения к БД, экономия памяти
+        
+        2. ttl (time-to-live) - время жизни объекта в кэше
+           - Больше = реже обращения к БД, но могут быть stale данные
+           - Меньше = свежие данные, но чаще обращения к БД
+        
+        3. offheap (MB) - хранение вне Java Heap (опционально, не используется)
+           - Позволяет кэшировать больше объектов без GC pressure
+           - Медленнее чем heap, но быстрее чем БД
+    -->
+    
+    <!-- Кэш для Flat (Квартиры) -->
+    <cache alias="com.arekalov.islab1.entity.Flat">
+        <expiry>
+            <!-- TTL 10 минут - баланс между свежестью и производительностью -->
+            <ttl unit="minutes">10</ttl>
+        </expiry>
+        <resources>
+            <!-- 1000 квартир в памяти - основная сущность, часто запрашивается -->
+            <heap unit="entries">1000</heap>
+        </resources>
+    </cache>
+    
+    <!-- Кэш для House (Дома) -->
+    <cache alias="com.arekalov.islab1.entity.House">
+        <expiry>
+            <!-- TTL 30 минут - дома изменяются реже чем квартиры -->
+            <ttl unit="minutes">30</ttl>
+        </expiry>
+        <resources>
+            <!-- 500 домов в памяти - их меньше чем квартир -->
+            <heap unit="entries">500</heap>
+        </resources>
+    </cache>
+    
+    <!-- Кэш для Coordinates (Координаты) -->
+    <cache alias="com.arekalov.islab1.entity.Coordinates">
+        <expiry>
+            <!-- TTL 15 минут - координаты изменяются редко -->
+            <ttl unit="minutes">15</ttl>
+        </expiry>
+        <resources>
+            <!-- 2000 координат в памяти - их может быть много (переиспользование) -->
+            <heap unit="entries">2000</heap>
+        </resources>
+    </cache>
+    
+</config>
+
