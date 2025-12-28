@@ -1,31 +1,50 @@
 package com.arekalov.islab1.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.EntityManagerFactory;
 import java.util.logging.Logger;
 
 /**
- * Сервис для управления EntityManager
- * Предоставляет доступ к EntityManager для репозиториев
+ * Сервис для управления EntityManager с DBCP2
+ * Создает EntityManager из нашего кастомного EMF
  */
 @ApplicationScoped
 public class EntityManagerService {
     
     private static final Logger logger = Logger.getLogger(EntityManagerService.class.getName());
     
-    @PersistenceContext(unitName = "flatsPU")
-    private EntityManager entityManager;
+    @Inject
+    private EntityManagerFactory emf;
+    
+    private ThreadLocal<EntityManager> entityManagerThreadLocal = new ThreadLocal<>();
     
     /**
      * Получить EntityManager для использования в репозиториях
      */
     public EntityManager getEntityManager() {
-        if (entityManager == null) {
-            logger.severe("EntityManager is null! Check persistence.xml configuration");
-            throw new IllegalStateException("EntityManager is not available");
+        EntityManager em = entityManagerThreadLocal.get();
+        if (em == null || !em.isOpen()) {
+            em = emf.createEntityManager();
+            entityManagerThreadLocal.set(em);
+            logger.fine("Created new EntityManager for thread: " + Thread.currentThread().getName());
         }
-        return entityManager;
+        return em;
+    }
+    
+    /**
+     * Закрыть EntityManager после использования
+     */
+    public void closeEntityManager() {
+        EntityManager em = entityManagerThreadLocal.get();
+        if (em != null && em.isOpen()) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            em.close();
+            entityManagerThreadLocal.remove();
+        }
     }
     
     /**
@@ -63,7 +82,10 @@ public class EntityManagerService {
      * Проверить, активна ли транзакция
      */
     public boolean isTransactionActive() {
-        return entityManager != null && entityManager.getTransaction().isActive();
+        EntityManager em = entityManagerThreadLocal.get();
+        return em != null && em.isOpen() && em.getTransaction().isActive();
     }
 }
+
+
 

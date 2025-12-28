@@ -22,6 +22,13 @@ dependencies {
     // Jakarta EE API (provided by WildFly, but needed for compilation)
     compileOnly("jakarta.platform:jakarta.jakartaee-api:9.1.0")
     
+    // Apache Commons DBCP2 - Connection Pool (старая версия с javax)
+    implementation("org.apache.commons:commons-dbcp2:2.9.0")
+    implementation("org.apache.commons:commons-pool2:2.11.1")
+    
+    // EclipseLink JPA провайдер (включаем в WAR)
+    implementation("org.eclipse.persistence:eclipselink:3.0.3")
+    
     // EclipseLink Core для нативного API (БЕЗ JPA)
     implementation("org.eclipse.persistence:org.eclipse.persistence.core:4.0.2")
     implementation("org.eclipse.persistence:org.eclipse.persistence.asm:9.4.0")
