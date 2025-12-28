@@ -18,6 +18,11 @@ REMOTE_DEPLOY_DIR="$REMOTE_WILDFLY_PATH/standalone/deployments"
 APP_PORT=8080
 HTTP_MANAGEMENT_PORT=28600
 MANAGEMENT_PORT=28603
+MINIO_PORT=9000
+MINIO_ENDPOINT="http://localhost:9000"
+MINIO_ACCESS_KEY="admin"
+MINIO_SECRET_KEY="admin12345"
+MINIO_BUCKET="import-files"
 
 # =============================================================================
 # ЦВЕТА ДЛЯ ВЫВОДА
@@ -127,19 +132,31 @@ echo "   • Приложение:    http://localhost:$APP_PORT/is-lab1"
 echo "   • WildFly Admin: http://localhost:$HTTP_MANAGEMENT_PORT"
 echo "   • Management:    http://localhost:$MANAGEMENT_PORT"
 echo ""
+echo "🗄️  MinIO:"
+echo "   • Endpoint:      http://localhost:$MINIO_PORT (reverse tunnel)"
+echo "   • Bucket:        $MINIO_BUCKET"
+echo "   • Access Key:    $MINIO_ACCESS_KEY"
+echo ""
 echo "💡 Для остановки нажмите Ctrl+C"
 echo ""
 print_warning "Подключение к серверу и запуск WildFly..."
 echo ""
 
 # Подключение с проброской портов и запуск сервера
+# -L: Local forward (клиент -> сервер)
+# -R: Remote forward (сервер -> клиент) - для MinIO
 ssh -L "$APP_PORT:localhost:8080" \
     -L "$HTTP_MANAGEMENT_PORT:localhost:28600" \
     -L "$MANAGEMENT_PORT:localhost:28603" \
+    -R "$MINIO_PORT:localhost:$MINIO_PORT" \
     "$REMOTE_HOST" \
     "cd $REMOTE_WILDFLY_PATH && \
-     export JAVA_OPTS=\"-Xms128m -Xmx256m \
-     -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=128m \
+     export MINIO_ENDPOINT='$MINIO_ENDPOINT' && \
+     export MINIO_ACCESS_KEY='$MINIO_ACCESS_KEY' && \
+     export MINIO_SECRET_KEY='$MINIO_SECRET_KEY' && \
+     export MINIO_BUCKET='$MINIO_BUCKET' && \
+     export JAVA_OPTS=\"-Xms256m -Xmx512m \
+     -XX:MetaspaceSize=128M -XX:MaxMetaspaceSize=256m \
      --add-opens=java.base/java.util=ALL-UNNAMED \
      --add-opens=java.base/java.lang=ALL-UNNAMED \
      --add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
@@ -148,5 +165,8 @@ ssh -L "$APP_PORT:localhost:8080" \
      --add-opens=java.base/java.util.concurrent=ALL-UNNAMED \
      --add-opens=java.management/javax.management=ALL-UNNAMED \
      --add-opens=java.naming/javax.naming=ALL-UNNAMED\" && \
+     echo '═══════════════════════════════════════════════════════' && \
+     echo 'MinIO: '\$MINIO_ENDPOINT' (bucket: '\$MINIO_BUCKET')' && \
+     echo '═══════════════════════════════════════════════════════' && \
      ./bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0"
 

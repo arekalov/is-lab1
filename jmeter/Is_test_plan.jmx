@@ -91,7 +91,7 @@
             <stringProp name="JSONPostProcessor.defaultValues">HOSE_NOT_FOUND</stringProp>
           </JSONPostProcessor>
           <hashTree/>
-          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="JSR223 PostProcessor" enabled="true">
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="JSR223 PostProcessor">
             <stringProp name="cacheKey">true</stringProp>
             <stringProp name="filename"></stringProp>
             <stringProp name="parameters"></stringProp>
@@ -119,7 +119,7 @@
                 <stringProp name="Argument.value">{&#xd;
 	&quot;name&quot;: &quot;Jmeter_testHouse2&quot;,&#xd;
 	&quot;year&quot;: 2005,&#xd;
-	&quot;numberOfFlatsOnFloor&quot;: 12&#xd;
+	&quot;numberOfFlatsOnFloor&quot;: 3&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -260,7 +260,7 @@
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group Houses">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group Houses" enabled="false">
         <intProp name="ThreadGroup.num_threads">5</intProp>
         <intProp name="ThreadGroup.ramp_time">0</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -271,7 +271,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config">
           <stringProp name="delimiter">,</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="filename">/Users/arekalov/Yandex.Disk.localized/Itmo/5/IS/lab1/is-lab1/jmeter/houses.csv</stringProp>
@@ -294,7 +294,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete houseId1" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete houseId1">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/houses/${__property(houseId1)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">DELETE</stringProp>
@@ -326,7 +326,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/houses/${__property(houseId2)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -349,7 +349,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config">
           <stringProp name="delimiter">,</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="filename">/Users/arekalov/Yandex.Disk.localized/Itmo/5/IS/lab1/is-lab1/jmeter/flats.csv</stringProp>
@@ -361,7 +361,7 @@
           <stringProp name="variableNames">flatName,coordX,coordY,area,price,balcony,timeToMetro,numberOfRooms,livingSpace,furnish,view,floor,houseId</stringProp>
         </CSVDataSet>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get all flats. Paging off" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get all flats. Paging off">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/flats?page=0&amp;size=100</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -372,7 +372,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete flatId1" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete flatId1">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/flats/${__property(flatId1)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">DELETE</stringProp>
@@ -383,7 +383,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Update flatId2" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Update flatId2">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/flats/${__property(flatId2)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">PUT</stringProp>
@@ -474,7 +474,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create flat (terrible view)" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create flat (terrible view)">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/flats</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
@@ -508,8 +508,8 @@
         </HTTPSamplerProxy>
         <hashTree/>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group: import" enabled="false">
-        <intProp name="ThreadGroup.num_threads">1</intProp>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group: import">
+        <intProp name="ThreadGroup.num_threads">5</intProp>
         <intProp name="ThreadGroup.ramp_time">0</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
@@ -519,7 +519,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Import request" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Import request">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/import</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
@@ -531,41 +531,27 @@
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">[&#xd;
   {&#xd;
-    &quot;type&quot;: &quot;HOUSE&quot;,&#xd;
+    &quot;type&quot;: &quot;FLAT&quot;,&#xd;
     &quot;operation&quot;: &quot;CREATE&quot;,&#xd;
     &quot;data&quot;: {&#xd;
-      &quot;name&quot;: &quot;Отдельный дом Березка&quot;,&#xd;
-      &quot;year&quot;: 2021,&#xd;
-      &quot;numberOfFlatsOnFloor&quot;: 2&#xd;
-    }&#xd;
-  },&#xd;
-  {&#xd;
-    &quot;type&quot;: &quot;FLAT&quot;,&#xd;
-    &quot;data&quot;: {&#xd;
-      &quot;id&quot;: ${__property(flatId2)},&#xd;
-      &quot;name&quot;: &quot;Обновленная квартира 101&quot;,&#xd;
-      &quot;floor&quot;: 2,&#xd;
-      &quot;area&quot;: 55,&#xd;
-      &quot;price&quot;: 5500000,&#xd;
+      &quot;name&quot;: &quot;Квартира 101&quot;,&#xd;
+      &quot;floor&quot;: 1,&#xd;
+      &quot;area&quot;: 50,&#xd;
+      &quot;price&quot;: 5000000,&#xd;
       &quot;balcony&quot;: true,&#xd;
       &quot;timeToMetroOnFoot&quot;: 10,&#xd;
       &quot;numberOfRooms&quot;: 2,&#xd;
-      &quot;livingSpace&quot;: 38,&#xd;
+      &quot;livingSpace&quot;: 35,&#xd;
       &quot;furnish&quot;: &quot;DESIGNER&quot;,&#xd;
-      &quot;view&quot;: &quot;GOOD&quot;&#xd;
-    }&#xd;
-  },&#xd;
-  &#xd;
-  {&#xd;
-    &quot;type&quot;: &quot;FLAT&quot;,&#xd;
-    &quot;operation&quot;: &quot;DELETE&quot;,&#xd;
-    &quot;data&quot;: {&#xd;
-      &quot;id&quot;: ${__property(flatId2)}&#xd;
+      &quot;view&quot;: &quot;YARD&quot;,&#xd;
+      &quot;coordinates&quot;: {&#xd;
+        &quot;x&quot;: 1,&#xd;
+        &quot;y&quot;: 2&#xd;
+      },&#xd;
+      &quot;house&quot;: ${__property(houseId2)}&#xd;
     }&#xd;
   }&#xd;
-]&#xd;
-&#xd;
-</stringProp>
+]</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -584,7 +570,7 @@
         </elementProp>
       </PostThreadGroup>
       <hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete houseId1" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete houseId1">
           <stringProp name="HTTPSampler.path">${BASE_PATH}/houses/${__property(houseId1)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">DELETE</stringProp>
@@ -596,7 +582,7 @@
         </HTTPSamplerProxy>
         <hashTree/>
       </hashTree>
-      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report" enabled="true">
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
@@ -633,7 +619,7 @@
         <stringProp name="filename"></stringProp>
       </ResultCollector>
       <hashTree/>
-      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
@@ -670,7 +656,7 @@
         <stringProp name="filename"></stringProp>
       </ResultCollector>
       <hashTree/>
-      <ResultCollector guiclass="GraphVisualizer" testclass="ResultCollector" testname="Graph Results" enabled="true">
+      <ResultCollector guiclass="GraphVisualizer" testclass="ResultCollector" testname="Graph Results">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>

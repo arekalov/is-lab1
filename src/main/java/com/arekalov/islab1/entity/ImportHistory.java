@@ -41,10 +41,10 @@ public class ImportHistory {
     private Integer objectsCount;
     
     /**
-     * Описание изменений в формате JSON
-     * Содержит массив объектов с информацией о созданных сущностях
+     * UUID ключ файла в MinIO
+     * Формат: "f7d3e4b2-4b7c-11ed-bdc3-0242ac120002.json"
      */
-    @Column(name = "changes_description", columnDefinition = "TEXT")
-    private String changesDescription;
+    @Column(name = "file_object_key", length = 255)
+    private String fileObjectKey;
 }
 

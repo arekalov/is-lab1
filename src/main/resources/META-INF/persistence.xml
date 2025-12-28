@@ -13,6 +13,7 @@
         <class>com.arekalov.islab1.entity.House</class>
         <class>com.arekalov.islab1.entity.Coordinates</class>
         <class>com.arekalov.islab1.entity.ImportHistory</class>
+        <class>com.arekalov.islab1.entity.TransactionLog</class>
         
         <properties>
             <!-- EclipseLink specific properties -->

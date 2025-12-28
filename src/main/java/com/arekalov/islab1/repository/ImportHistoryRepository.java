@@ -2,17 +2,19 @@ package com.arekalov.islab1.repository;
 
 import com.arekalov.islab1.entity.ImportHistory;
 import com.arekalov.islab1.service.EntityManagerService;
-import jakarta.ejb.Stateless;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * Репозиторий для работы с историей импорта
+ * Использует CDI с явными транзакциями
  */
-@Stateless
+@ApplicationScoped
 public class ImportHistoryRepository {
     
     private static final Logger logger = Logger.getLogger(ImportHistoryRepository.class.getName());
@@ -22,7 +24,9 @@ public class ImportHistoryRepository {
     
     /**
      * Сохранить запись об импорте
+     * REQUIRED - присоединяется к существующей транзакции
      */
+    @Transactional(Transactional.TxType.REQUIRED)
     public ImportHistory save(ImportHistory importHistory) {
         logger.info("ImportHistoryRepository.save() - сохранение записи импорта");
         
@@ -42,6 +46,7 @@ public class ImportHistoryRepository {
     /**
      * Найти запись по ID
      */
+    @Transactional(Transactional.TxType.SUPPORTS)
     public ImportHistory findById(Long id) {
         logger.info("ImportHistoryRepository.findById() - поиск записи id=" + id);
         

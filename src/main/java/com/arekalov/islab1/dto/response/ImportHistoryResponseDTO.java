@@ -32,9 +32,9 @@ public class ImportHistoryResponseDTO {
     private Integer objectsCount;
     
     /**
-     * Описание изменений в формате JSON
-     * Массив объектов с информацией о созданных сущностях
+     * UUID файла в MinIO (import-files bucket)
+     * Используется для скачивания оригинального JSON файла импорта
      */
-    private String changesDescription;
+    private String fileObjectKey;
 }
 

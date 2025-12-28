@@ -22,7 +22,7 @@ public class ImportHistoryMapper {
             .id(entity.getId())
             .operationTime(entity.getOperationTime())
             .objectsCount(entity.getObjectsCount())
-            .changesDescription(entity.getChangesDescription())
+            .fileObjectKey(entity.getFileObjectKey())
             .build();
     }
 }

@@ -1,6 +1,7 @@
 package com.arekalov.islab1.service;
 
 import com.arekalov.islab1.entity.*;
+import com.arekalov.islab1.exception.UniqueConstraintViolationException;
 import com.arekalov.islab1.exception.ValidationException;
 import com.arekalov.islab1.repository.FlatRepository;
 import com.arekalov.islab1.repository.HouseRepository;
@@ -11,7 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.ejb.Stateless;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
@@ -27,8 +28,10 @@ import java.util.stream.Collectors;
 /**
  * Универсальный сервис для импорта объектов из JSON
  * Поддерживает операции CREATE, UPDATE, DELETE для Flat, House, Coordinates
+ * 
+ * Использует CDI с явными транзакциями для 2PC
  */
-@Stateless
+@ApplicationScoped
 public class ImportService {
     
     private static final Logger logger = Logger.getLogger(ImportService.class.getName());
@@ -54,8 +57,13 @@ public class ImportService {
     @Inject
     private FlatService flatService;
     
+    @Inject
+    private TransactionCoordinator txCoordinator;
+    
     /**
-     * Универсальный импорт объектов
+     * Унив
+
+ерсальный импорт объектов
      * Принимает массив операций с разными типами объектов
      * 
      * @param json JSON строка с массивом операций
@@ -63,45 +71,68 @@ public class ImportService {
      */
     @Transactional(Transactional.TxType.REQUIRED)
     public ImportHistory importObjects(String json) {
-        logger.info("ImportService.importObjects() - начало импорта");
+        return importObjectsWithFileName(json, "import-" + System.currentTimeMillis() + ".json");
+    }
+    
+    /**
+     * Универсальный импорт объектов с двухфазным коммитом (2PC)
+     * 
+     * Протокол с staging/final областями в MinIO:
+     * PHASE 1 (PREPARE): загрузить в staging/, валидировать данные
+     * PHASE 2 (COMMIT): сохранить в БД, скопировать staging -> final
+     * 
+     * @param json JSON строка с массивом операций
+     * @param fileName имя файла для сохранения в MinIO
+     * @return История импорта
+     */
+    @Transactional(Transactional.TxType.REQUIRED)
+    public ImportHistory importObjectsWithFileName(String json, String fileName) {
+        byte[] fileContent = json.getBytes();
+        TransactionLog txLog = null;
         
         try {
-            // Парсим JSON в массив операций
+            // BEGIN TRANSACTION
+            txLog = txCoordinator.beginTransaction(fileContent, fileName);
+            
+            // Идемпотентность: если файл уже импортирован
+            if (txLog.getState() == TransactionLog.TransactionState.COMMITTED) {
+                ImportHistory existing = importHistoryRepository.findById(txLog.getImportHistoryId());
+                logger.warning("File already imported, returning existing: id=" + existing.getId());
+                return existing;
+            }
+            
+            // PHASE 1: PREPARE MinIO (upload to staging)
+            txLog = txCoordinator.prepareMinIO(txLog, fileContent);
+            
+            // PHASE 1: PREPARE Database (validate JSON format)
+            txLog = txCoordinator.prepareDatabase(txLog, json);
+            
+            // PHASE 2: COMMIT Database (execute validated operations)
             List<ImportOperationRequest> operations = objectMapper.readValue(
-                json, 
+                txLog.getValidatedOperations(), 
                 objectMapper.getTypeFactory().constructCollectionType(List.class, ImportOperationRequest.class)
             );
             
-            if (operations == null || operations.isEmpty()) {
-                throw new IllegalArgumentException("Массив операций пуст");
-            }
+            logger.info("");
+            logger.info("╔════════════════════════════════════════════════════════╗");
+            logger.info("║  PHASE 2: COMMIT Database Participant                   ║");
+            logger.info("╚════════════════════════════════════════════════════════╝");
             
-            logger.info("ImportService.importObjects() - найдено " + operations.size() + " операций");
-            
-            // Счетчик успешно созданных/измененных/удаленных объектов (включая вложенные)
             int successCount = 0;
-            
-            // Обрабатываем каждую операцию
             for (int i = 0; i < operations.size(); i++) {
                 ImportOperationRequest operation = operations.get(i);
-                logger.info(String.format("ImportService.importObjects() - операция %d: type=%s, operation=%s", 
-                    i + 1, operation.getType(), operation.getOperation()));
+                logger.info(String.format("Operation %d/%d: type=%s, operation=%s", 
+                    i + 1, operations.size(), operation.getType(), operation.getOperation()));
                 
-                // Определяем тип объекта и операцию
                 String type = operation.getType().toUpperCase();
                 JsonNode dataNode = objectMapper.valueToTree(operation.getData());
                 
-                // Автоопределение операции по наличию id
                 String op = operation.getOperation();
                 if (op == null || op.isEmpty()) {
                     op = dataNode.has("id") && !dataNode.get("id").isNull() ? "UPDATE" : "CREATE";
                 }
                 op = op.toUpperCase();
                 
-                logger.info("ImportService.importObjects() - выполняется: " + type + " " + op);
-                
-                // Выполняем операцию в зависимости от типа
-                // Методы возвращают количество затронутых объектов (включая вложенные)
                 int affectedObjects = 0;
                 switch (type) {
                     case "FLAT":
@@ -119,33 +150,41 @@ public class ImportService {
                 successCount += affectedObjects;
             }
             
-            // Форматируем JSON для сохранения (удаляем поля с null id и форматируем)
-            String formattedJson = formatJson(json);
-            
-            // Создаем запись в истории импорта с сохранением исходного JSON
+            // Создаем ImportHistory
             ImportHistory history = ImportHistory.builder()
                 .operationTime(LocalDateTime.now())
                 .objectsCount(successCount)
-                .changesDescription(formattedJson)
                 .build();
             
             history = importHistoryRepository.save(history);
-            logger.info("ImportService.importObjects() - импорт успешно завершен, история id=" + history.getId());
+            logger.info("Database COMMIT: ImportHistory created, id=" + history.getId());
+            
+            // PHASE 2: COMMIT MinIO (copy staging -> final)
+            txLog = txCoordinator.commit(txLog, history);
+            
+            // Обновляем ImportHistory с финальным путем к файлу
+            history.setFileObjectKey(txLog.getFinalObjectKey());
+            history = importHistoryRepository.save(history);
             
             return history;
             
         } catch (ValidationException e) {
-            // Ошибки валидации - пробрасываем как есть
-            logger.warning("ImportService.importObjects() - ошибка валидации: " + e.getMessage());
+            abortTransaction(txLog);
+            logger.warning("Validation error: " + e.getMessage());
+            throw e;
+            
+        } catch (UniqueConstraintViolationException e) {
+            abortTransaction(txLog);
+            logger.warning("Unique constraint violation: " + e.getMessage());
             throw e;
             
         } catch (IllegalArgumentException e) {
-            // Ошибки бизнес-логики - пробрасываем как есть
-            logger.warning("ImportService.importObjects() - ошибка бизнес-логики: " + e.getMessage());
+            abortTransaction(txLog);
+            logger.warning("Business logic error: " + e.getMessage());
             throw e;
             
         } catch (InvalidFormatException e) {
-            // Jackson ошибки форматирования (например, некорректный enum)
+            abortTransaction(txLog);
             String fieldName = e.getPath().isEmpty() ? "unknown" : 
                 e.getPath().get(e.getPath().size() - 1).getFieldName();
             String value = String.valueOf(e.getValue());
@@ -168,19 +207,32 @@ public class ImportService {
                 );
             }
             
-            logger.warning("ImportService.importObjects() - ошибка формата данных: " + message);
+            logger.warning("Format error: " + message);
             throw new IllegalArgumentException(message, e);
             
         } catch (JsonProcessingException e) {
-            // Другие Jackson ошибки парсинга
-            logger.warning("ImportService.importObjects() - ошибка парсинга JSON: " + e.getMessage());
+            abortTransaction(txLog);
+            logger.warning("JSON parsing error: " + e.getMessage());
             throw new IllegalArgumentException("Ошибка парсинга JSON: " + e.getOriginalMessage(), e);
             
         } catch (Exception e) {
-            // Настоящие технические ошибки
-            logger.severe("ImportService.importObjects() - техническая ошибка: " + e.getClass().getName() + ": " + e.getMessage());
+            abortTransaction(txLog);
+            logger.severe("Technical error: " + e.getClass().getName() + ": " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Техническая ошибка сервера", e);
+        }
+    }
+    
+    /**
+     * Откатить транзакцию (вызывается при ошибках)
+     */
+    private void abortTransaction(TransactionLog txLog) {
+        if (txLog != null) {
+            try {
+                txCoordinator.abort(txLog);
+            } catch (Exception abortError) {
+                logger.severe("ABORT failed: " + abortError.getMessage());
+            }
         }
     }
     
